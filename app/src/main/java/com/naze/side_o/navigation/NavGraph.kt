@@ -38,17 +38,11 @@ fun NavGraph(
             val viewModel: HomeViewModel = viewModel(
                 factory = HomeViewModelFactory(repository)
             )
-            Column(modifier = Modifier.fillMaxSize()) {
-                HomeScreen(viewModel = viewModel)
-                Column(Modifier.padding(16.dp)) {
-                    Button(onClick = { navController.navigate(Screen.Archive.route) }) {
-                        Text("아카이브로")
-                    }
-                    Button(onClick = { navController.navigate(Screen.Settings.route) }) {
-                        Text("설정으로")
-                    }
-                }
-            }
+            HomeScreen(
+                viewModel = viewModel,
+                onNavigateToArchive = { navController.navigate(Screen.Archive.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+            )
         }
         composable(Screen.Archive.route) {
             val context = LocalContext.current

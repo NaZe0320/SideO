@@ -8,11 +8,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -26,6 +35,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,60 +46,123 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.naze.side_o.ui.theme.CompleteGreen
+import com.naze.side_o.ui.theme.CompleteGreenContent
+import com.naze.side_o.ui.theme.DeleteRed
+import com.naze.side_o.ui.theme.DeleteRedContent
+import com.naze.side_o.ui.theme.StarOutlineGray
+import com.naze.side_o.ui.theme.StarYellow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    onNavigateToArchive: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val activeTodos by viewModel.activeTodos.collectAsState()
     var newTitle by remember { mutableStateOf("") }
     var newImportant by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = newTitle,
-                onValueChange = { newTitle = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("할 일") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                trailingIcon = {
-                    IconButton(onClick = { newImportant = !newImportant }) {
+    val dateStr = remember {
+        val locale = Locale.getDefault()
+        val pattern = if (locale.language == "ko") "M월 d일 EEEE" else "MMMM d, EEEE"
+        SimpleDateFormat(pattern, locale).format(Date())
+    }
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = dateStr,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                    IconButton(onClick = onNavigateToArchive) {
                         Icon(
-                            imageVector = if (newImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                            contentDescription = if (newImportant) "중요" else "일반",
-                            tint = if (newImportant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            imageVector = Icons.Outlined.Archive,
+                            contentDescription = "아카이브"
+                        )
+                    }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "설정"
                         )
                     }
                 }
-            )
-            TextButton(
-                onClick = {
-                    viewModel.addTodo(newTitle, newImportant)
-                    newTitle = ""
-                    newImportant = false
-                }
+            }
+        },
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("추가")
+                OutlinedTextField(
+                    value = newTitle,
+                    onValueChange = { newTitle = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Enter a task...") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    trailingIcon = {
+                        IconButton(onClick = { newImportant = !newImportant }) {
+                            Icon(
+                                imageVector = if (newImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                contentDescription = if (newImportant) "중요" else "일반",
+                                tint = if (newImportant) StarYellow else StarOutlineGray
+                            )
+                        }
+                    },
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (newTitle.isNotBlank()) {
+                                viewModel.addTodo(newTitle.trim(), newImportant)
+                                newTitle = ""
+                                newImportant = false
+                            }
+                        }
+                    )
+                )
+                TextButton(
+                    onClick = {
+                        if (newTitle.isNotBlank()) {
+                            viewModel.addTodo(newTitle.trim(), newImportant)
+                            newTitle = ""
+                            newImportant = false
+                        }
+                    }
+                ) {
+                    Text("추가")
+                }
             }
         }
-
+    ) { contentPadding ->
         if (activeTodos.isEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(contentPadding)
                     .padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -102,7 +175,9 @@ fun HomeScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 content = {
                     items(
@@ -142,7 +217,8 @@ private fun HomeTodoItem(
                 }
                 else -> false
             }
-        }
+        },
+        positionalThreshold = { totalDistance -> totalDistance * 0.5f }
     )
     var showEditDialog by remember { mutableStateOf(false) }
     var editTitle by remember(todo.id) { mutableStateOf(todo.title) }
@@ -218,6 +294,7 @@ private fun HomeTodoItem(
         )
     }
 
+    val cardShape = RoundedCornerShape(12.dp)
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
@@ -225,28 +302,60 @@ private fun HomeTodoItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                        SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.tertiaryContainer
+                        SwipeToDismissBoxValue.EndToStart -> DeleteRed
+                        SwipeToDismissBoxValue.StartToEnd -> CompleteGreen
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 )
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = when (dismissState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart -> Arrangement.End
+                            SwipeToDismissBoxValue.StartToEnd -> Arrangement.Start
+                            else -> Arrangement.Center
+                        }
+                    ) {
                         when (dismissState.dismissDirection) {
-                            SwipeToDismissBoxValue.EndToStart -> "삭제"
-                            SwipeToDismissBoxValue.StartToEnd -> "완료"
-                            else -> ""
-                        },
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                            SwipeToDismissBoxValue.EndToStart -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = null,
+                                    tint = DeleteRedContent
+                                )
+                                Text(
+                                    "Delete",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = DeleteRedContent,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                            SwipeToDismissBoxValue.StartToEnd -> {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    tint = CompleteGreenContent
+                                )
+                                Text(
+                                    "Complete",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = CompleteGreenContent,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                            else -> {}
+                        }
+                    }
                 }
             }
         },
@@ -265,7 +374,8 @@ private fun HomeTodoItem(
                     },
                     onLongClick = { showReorderDialog = true }
                 ),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            shape = cardShape,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Row(
                 modifier = Modifier
@@ -273,20 +383,20 @@ private fun HomeTodoItem(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = todo.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
                 IconButton(
                     onClick = { viewModel.setImportant(todo.id, !todo.isImportant) }
                 ) {
                     Icon(
                         imageVector = if (todo.isImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
                         contentDescription = if (todo.isImportant) "중요 해제" else "중요",
-                        tint = if (todo.isImportant) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (todo.isImportant) StarYellow else StarOutlineGray
                     )
                 }
-                Text(
-                    text = todo.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
     }
