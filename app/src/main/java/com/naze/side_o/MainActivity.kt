@@ -1,4 +1,4 @@
-package com.naze.side_o
+    package com.naze.side_o
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
