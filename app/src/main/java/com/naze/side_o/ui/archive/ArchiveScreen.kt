@@ -54,8 +54,7 @@ fun ArchiveScreen(
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        modifier = modifier,contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             if (selectedIds.isNotEmpty()) {
