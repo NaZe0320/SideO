@@ -5,12 +5,14 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -36,6 +38,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -78,120 +81,123 @@ fun HomeScreen(
     }
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets.safeDrawing,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = dateStr,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-                    IconButton(onClick = onNavigateToArchive) {
-                        Icon(
-                            imageVector = Icons.Outlined.Archive,
-                            contentDescription = "아카이브"
-                        )
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "설정"
-                        )
+            Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = dateStr,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+                        IconButton(onClick = onNavigateToArchive) {
+                            Icon(
+                                imageVector = Icons.Outlined.Archive,
+                                contentDescription = "아카이브"
+                            )
+                        }
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(
+                                imageVector = Icons.Outlined.Settings,
+                                contentDescription = "설정"
+                            )
+                        }
                     }
                 }
             }
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = newTitle,
-                    onValueChange = { newTitle = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Enter a task...") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    trailingIcon = {
-                        IconButton(onClick = { newImportant = !newImportant }) {
-                            Icon(
-                                imageVector = if (newImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = if (newImportant) "중요" else "일반",
-                                tint = if (newImportant) StarYellow else StarOutlineGray
-                            )
-                        }
-                    },
-                    keyboardActions = KeyboardActions(
-                        onDone = {
+            Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = newTitle,
+                        onValueChange = { newTitle = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Enter a task...") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        trailingIcon = {
+                            IconButton(onClick = { newImportant = !newImportant }) {
+                                Icon(
+                                    imageVector = if (newImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                    contentDescription = if (newImportant) "중요" else "일반",
+                                    tint = if (newImportant) StarYellow else StarOutlineGray
+                                )
+                            }
+                        },
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (newTitle.isNotBlank()) {
+                                    viewModel.addTodo(newTitle.trim(), newImportant)
+                                    newTitle = ""
+                                    newImportant = false
+                                }
+                            }
+                        )
+                    )
+                    TextButton(
+                        onClick = {
                             if (newTitle.isNotBlank()) {
                                 viewModel.addTodo(newTitle.trim(), newImportant)
                                 newTitle = ""
                                 newImportant = false
                             }
                         }
+                    ) {
+                        Text("추가")
+                    }
+                }
+            }
+        },
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (activeTodos.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "할 일이 없습니다",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
-                TextButton(
-                    onClick = {
-                        if (newTitle.isNotBlank()) {
-                            viewModel.addTodo(newTitle.trim(), newImportant)
-                            newTitle = ""
-                            newImportant = false
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    content = {
+                        items(
+                            items = activeTodos,
+                            key = { it.id }
+                        ) { todo ->
+                            HomeTodoItem(
+                                todo = todo,
+                                viewModel = viewModel,
+                                allItems = activeTodos
+                            )
                         }
                     }
-                ) {
-                    Text("추가")
-                }
-            }
-        }
-    ) { contentPadding ->
-        if (activeTodos.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "할 일이 없습니다",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                content = {
-                    items(
-                        items = activeTodos,
-                        key = { it.id }
-                    ) { todo ->
-                        HomeTodoItem(
-                            todo = todo,
-                            viewModel = viewModel,
-                            allItems = activeTodos
-                        )
-                    }
-                }
-            )
         }
     }
 }
