@@ -13,5 +13,6 @@ data class TodoEntity(
     val isDeleted: Boolean = false,
     val deletedAt: Long? = null,
     val createdAt: Long,
+    val completedAt: Long? = null,
     val orderIndex: Int = 0
 )

@@ -31,7 +31,12 @@ class TodoRepository(
 
     suspend fun setCompleted(id: Long, completed: Boolean) {
         val entity = dao.getById(id) ?: return
-        dao.update(entity.copy(isCompleted = completed))
+        dao.update(
+            entity.copy(
+                isCompleted = completed,
+                completedAt = if (completed) System.currentTimeMillis() else null
+            )
+        )
     }
 
     suspend fun setImportant(id: Long, important: Boolean) {

@@ -50,15 +50,11 @@ fun NavGraph(
             val viewModel: ArchiveViewModel = viewModel(
                 factory = ArchiveViewModelFactory(repository)
             )
-            Column(modifier = Modifier.fillMaxSize()) {
-                ArchiveScreen(viewModel = viewModel)
-                Button(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text("뒤로")
-                }
-            }
+            ArchiveScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize()
+            )
         }
         composable(Screen.Settings.route) {
             Column(modifier = Modifier.fillMaxSize()) {

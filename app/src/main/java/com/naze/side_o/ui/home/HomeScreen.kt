@@ -73,7 +73,7 @@ fun HomeScreen(
 
     val dateStr = remember {
         val locale = Locale.getDefault()
-        val pattern = if (locale.language == "ko") "M월 d일 EEEE" else "MMMM d, EEEE"
+        val pattern = if (locale.language == "ko") "yyyy년 M월 d일 EEEE" else "MMMM d, yyyy, EEEE"
         SimpleDateFormat(pattern, locale).format(Date())
     }
     Scaffold(
