@@ -34,4 +34,12 @@ interface TodoDao {
 
     @Query("UPDATE todos SET isDeleted = 1, deletedAt = :deletedAt WHERE id = :id")
     suspend fun markDeleted(id: Long, deletedAt: Long)
+
+    @Query(
+        "SELECT * FROM todos WHERE isDeleted = 1 AND deletedAt >= :since ORDER BY deletedAt DESC"
+    )
+    fun getRecentlyDeletedTodos(since: Long): Flow<List<TodoEntity>>
+
+    @Query("UPDATE todos SET isDeleted = 0, deletedAt = null WHERE id = :id")
+    suspend fun restore(id: Long)
 }

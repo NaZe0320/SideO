@@ -21,6 +21,9 @@ import com.naze.side_o.ui.home.HomeViewModelFactory
 import com.naze.side_o.ui.settings.SettingsScreen
 import com.naze.side_o.ui.settings.SettingsViewModel
 import com.naze.side_o.ui.settings.SettingsViewModelFactory
+import com.naze.side_o.ui.trash.TrashScreen
+import com.naze.side_o.ui.trash.TrashViewModel
+import com.naze.side_o.ui.trash.TrashViewModelFactory
 
 @Composable
 fun NavGraph(
@@ -53,6 +56,19 @@ fun NavGraph(
                 factory = ArchiveViewModelFactory(repository)
             )
             ArchiveScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTrash = { navController.navigate(Screen.Trash.route) },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable(Screen.Trash.route) {
+            val context = LocalContext.current
+            val repository = (context.applicationContext as TodoApplication).repository
+            val viewModel: TrashViewModel = viewModel(
+                factory = TrashViewModelFactory(repository)
+            )
+            TrashScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize()
