@@ -46,7 +46,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +53,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.preferences.ThemeMode
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
@@ -67,7 +65,6 @@ fun SettingsScreen(
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     if (showThemeDialog) {
         ThemeSelectDialog(
@@ -117,7 +114,8 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            // Premium Section
+            // Premium Section (주석 처리)
+            /*
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,6 +165,7 @@ fun SettingsScreen(
                     ) {}
                 }
             }
+            */
 
             // General Section
             SectionLabel(text = "일반")
@@ -198,7 +197,8 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Account & Data Section
+            // Account & Data Section (주석 처리)
+            /*
             SectionLabel(text = "계정 및 데이터")
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -231,6 +231,7 @@ fun SettingsScreen(
                     }
                 )
             }
+            */
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -268,26 +269,6 @@ fun SettingsScreen(
                     .padding(top = 32.dp, bottom = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Made with ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "♥",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Text(
-                        text = " by MinimalDev",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
                 Text(
                     text = "Version 1.0",
                     style = MaterialTheme.typography.labelSmall,
