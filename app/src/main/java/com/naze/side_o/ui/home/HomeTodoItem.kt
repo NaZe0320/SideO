@@ -48,17 +48,20 @@ import com.naze.side_o.ui.theme.StarYellow
 fun HomeTodoItem(
     todo: TodoEntity,
     viewModel: HomeViewModel,
-    allItems: List<TodoEntity>
+    allItems: List<TodoEntity>,
+    swipeReversed: Boolean = false
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.EndToStart -> {
-                    viewModel.markDeleted(todo.id)
+                    if (swipeReversed) viewModel.setCompleted(todo.id, true)
+                    else viewModel.markDeleted(todo.id)
                     true
                 }
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    viewModel.setCompleted(todo.id, true)
+                    if (swipeReversed) viewModel.markDeleted(todo.id)
+                    else viewModel.setCompleted(todo.id, true)
                     true
                 }
                 else -> false
@@ -151,8 +154,10 @@ fun HomeTodoItem(
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart -> DeleteRed
-                        SwipeToDismissBoxValue.StartToEnd -> CompleteGreen
+                        SwipeToDismissBoxValue.EndToStart ->
+                            if (swipeReversed) CompleteGreen else DeleteRed
+                        SwipeToDismissBoxValue.StartToEnd ->
+                            if (swipeReversed) DeleteRed else CompleteGreen
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 )
@@ -174,30 +179,58 @@ fun HomeTodoItem(
                     ) {
                         when (dismissState.dismissDirection) {
                             SwipeToDismissBoxValue.EndToStart -> {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = null,
-                                    tint = DeleteRedContent
-                                )
-                                Text(
-                                    "Delete",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = DeleteRedContent,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
+                                if (swipeReversed) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = CompleteGreenContent
+                                    )
+                                    Text(
+                                        "Complete",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = CompleteGreenContent,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Filled.Delete,
+                                        contentDescription = null,
+                                        tint = DeleteRedContent
+                                    )
+                                    Text(
+                                        "Delete",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = DeleteRedContent,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
                             }
                             SwipeToDismissBoxValue.StartToEnd -> {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                    tint = CompleteGreenContent
-                                )
-                                Text(
-                                    "Complete",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = CompleteGreenContent,
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
+                                if (swipeReversed) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Delete,
+                                        contentDescription = null,
+                                        tint = DeleteRedContent
+                                    )
+                                    Text(
+                                        "Delete",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = DeleteRedContent,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                        tint = CompleteGreenContent
+                                    )
+                                    Text(
+                                        "Complete",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = CompleteGreenContent,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
                             }
                             else -> {}
                         }

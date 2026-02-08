@@ -10,9 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -34,10 +36,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,44 +53,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.naze.side_o.data.preferences.ThemeMode
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
+    viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var swipeSettingsEnabled by remember { mutableStateOf(true) }
-    var remindersEnabled by remember { mutableStateOf(false) }
+    val themeMode by viewModel.themeMode.collectAsState()
+    val swipeReversed by viewModel.swipeReversed.collectAsState()
+    val remindersEnabled by viewModel.remindersEnabled.collectAsState()
+    var showThemeDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    if (showThemeDialog) {
+        ThemeSelectDialog(
+            currentMode = themeMode,
+            onSelect = {
+                viewModel.setThemeMode(it)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
+        )
+    }
 
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "뒤로"
+            Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "뒤로"
+                        )
+                    }
+                    Text(
+                        text = "설정",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 48.dp),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                Text(
-                    text = "설정",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 48.dp),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
             }
         }
     ) { contentPadding ->
@@ -133,7 +154,7 @@ fun SettingsScreen(
                                 containerColor = MaterialTheme.colorScheme.surface
                             )
                         ) {
-                            Text("Upgrade Now", style = MaterialTheme.typography.labelLarge)
+                            Text("업그레이드", style = MaterialTheme.typography.labelLarge)
                         }
                     }
                     Box(
@@ -148,7 +169,7 @@ fun SettingsScreen(
             }
 
             // General Section
-            SectionLabel(text = "General")
+            SectionLabel(text = "일반")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -159,18 +180,18 @@ fun SettingsScreen(
                     SettingsSwitchItem(
                         icon = Icons.Outlined.SwapHoriz,
                         iconTint = MaterialTheme.colorScheme.primary,
-                        title = "Swipe Settings",
-                        subtitle = "Left: Complete / Right: Delete",
-                        checked = swipeSettingsEnabled,
-                        onCheckedChange = { swipeSettingsEnabled = it }
+                        title = "스와이프 방향",
+                        subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
+                        checked = swipeReversed,
+                        onCheckedChange = { viewModel.setSwipeReversed(it) }
                     )
                     HorizontalDivider()
                     SettingsSwitchItem(
                         icon = Icons.Outlined.Notifications,
-                        title = "Reminders",
-                        subtitle = "Smart notifications for tasks",
+                        title = "알림",
+                        subtitle = "할 일 알림",
                         checked = remindersEnabled,
-                        onCheckedChange = { remindersEnabled = it }
+                        onCheckedChange = { viewModel.setRemindersEnabled(it) }
                     )
                 }
             }
@@ -178,7 +199,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Account & Data Section
-            SectionLabel(text = "Account & Data")
+            SectionLabel(text = "계정 및 데이터")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -187,15 +208,15 @@ fun SettingsScreen(
             ) {
                 SettingsRowItem(
                     icon = Icons.Outlined.CloudSync,
-                    title = "Data Management",
-                    subtitle = "Google Drive backup status",
+                    title = "데이터 관리",
+                    subtitle = "Google Drive 백업 상태",
                     trailing = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Linked",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                        Text(
+                            text = "연동됨",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                             Icon(
                                 imageVector = Icons.Outlined.ChevronRight,
                                 contentDescription = null,
@@ -214,7 +235,7 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Appearance Section
-            SectionLabel(text = "Appearance")
+            SectionLabel(text = "디자인")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -223,8 +244,12 @@ fun SettingsScreen(
             ) {
                 SettingsRowItem(
                     icon = Icons.Outlined.DarkMode,
-                    title = "Theme",
-                    subtitle = "Automatic (System)",
+                    title = "테마",
+                    subtitle = when (themeMode) {
+                        ThemeMode.SYSTEM -> "시스템 설정 따름"
+                        ThemeMode.LIGHT -> "라이트"
+                        ThemeMode.DARK -> "다크"
+                    },
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.ChevronRight,
@@ -232,11 +257,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar("준비 중입니다.")
-                        }
-                    }
+                    onClick = { showThemeDialog = true }
                 )
             }
 
@@ -406,4 +427,48 @@ private fun SettingsRowItem(
         }
         trailing()
     }
+}
+
+@Composable
+private fun ThemeSelectDialog(
+    currentMode: ThemeMode,
+    onSelect: (ThemeMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("테마 선택") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(mode) }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = when (mode) {
+                                ThemeMode.SYSTEM -> "시스템 설정 따름"
+                                ThemeMode.LIGHT -> "라이트"
+                                ThemeMode.DARK -> "다크"
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (mode == currentMode) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("닫기")
+            }
+        }
+    )
 }

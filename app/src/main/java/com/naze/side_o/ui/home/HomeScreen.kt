@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,6 +49,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    swipeReversed: Boolean = false,
     onNavigateToArchive: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -173,7 +176,8 @@ fun HomeScreen(
                             HomeTodoItem(
                                 todo = todo,
                                 viewModel = viewModel,
-                                allItems = activeTodos
+                                allItems = activeTodos,
+                                swipeReversed = swipeReversed
                             )
                         }
                     }
