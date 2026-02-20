@@ -39,7 +39,7 @@ fun NavGraph(
             val app = context.applicationContext as TodoApplication
             val repository = app.repository
             val viewModel: HomeViewModel = viewModel(
-                factory = HomeViewModelFactory(repository)
+                factory = HomeViewModelFactory(repository, app)
             )
             val swipeReversed by app.settingsRepository.swipeReversed.collectAsState(initial = false)
             HomeScreen(
@@ -51,9 +51,10 @@ fun NavGraph(
         }
         composable(Screen.Archive.route) {
             val context = LocalContext.current
-            val repository = (context.applicationContext as TodoApplication).repository
+            val app = context.applicationContext as TodoApplication
+            val repository = app.repository
             val viewModel: ArchiveViewModel = viewModel(
-                factory = ArchiveViewModelFactory(repository)
+                factory = ArchiveViewModelFactory(repository, app)
             )
             ArchiveScreen(
                 viewModel = viewModel,
@@ -64,9 +65,10 @@ fun NavGraph(
         }
         composable(Screen.Trash.route) {
             val context = LocalContext.current
-            val repository = (context.applicationContext as TodoApplication).repository
+            val app = context.applicationContext as TodoApplication
+            val repository = app.repository
             val viewModel: TrashViewModel = viewModel(
-                factory = TrashViewModelFactory(repository)
+                factory = TrashViewModelFactory(repository, app)
             )
             TrashScreen(
                 viewModel = viewModel,
