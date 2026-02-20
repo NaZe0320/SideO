@@ -1,5 +1,6 @@
 package com.naze.side_o.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,18 +19,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,12 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.naze.side_o.data.local.TodoEntity
-import com.naze.side_o.ui.theme.StarOutlineGray
-import com.naze.side_o.ui.theme.StarYellow
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.naze.side_o.ui.theme.Primary
+import com.naze.side_o.ui.theme.TextSecondary
 
 @Composable
 fun HomeScreen(
@@ -59,46 +54,46 @@ fun HomeScreen(
     var newTitle by remember { mutableStateOf("") }
     var newImportant by remember { mutableStateOf(false) }
 
-    val dateStr = remember {
-        val locale = Locale.getDefault()
-        val pattern = if (locale.language == "ko") "yyyy년 M월 d일 EEEE" else "MMMM d, yyyy, EEEE"
-        SimpleDateFormat(pattern, locale).format(Date())
-    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 20.dp, vertical = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconButton(onClick = onNavigateToArchive) {
+                        Icon(
+                            imageVector = Icons.Outlined.Archive,
+                            contentDescription = "아카이브",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
-                        text = dateStr,
-                        style = MaterialTheme.typography.headlineMedium
+                        text = "My Tasks",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-                        IconButton(onClick = onNavigateToArchive) {
-                            Icon(
-                                imageVector = Icons.Outlined.Archive,
-                                contentDescription = "아카이브"
-                            )
-                        }
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                imageVector = Icons.Outlined.Settings,
-                                contentDescription = "설정"
-                            )
-                        }
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Outlined.Settings,
+                            contentDescription = "설정",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
         },
         bottomBar = {
             Surface(
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .imePadding()
@@ -106,27 +101,38 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
+                    androidx.compose.material3.OutlinedTextField(
                         value = newTitle,
                         onValueChange = { newTitle = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Enter a task...") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        trailingIcon = {
-                            IconButton(onClick = { newImportant = !newImportant }) {
-                                Icon(
-                                    imageVector = if (newImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                    contentDescription = if (newImportant) "중요" else "일반",
-                                    tint = if (newImportant) StarYellow else StarOutlineGray
-                                )
-                            }
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(
+                                MaterialTheme.colorScheme.surface,
+                                RoundedCornerShape(32.dp)
+                            ),
+                        placeholder = {
+                            Text(
+                                "What's your next task?",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
+                            )
                         },
+                        singleLine = true,
+                        shape = RoundedCornerShape(32.dp),
+                        colors = androidx.compose.material3.TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 if (newTitle.isNotBlank()) {
@@ -137,16 +143,26 @@ fun HomeScreen(
                             }
                         )
                     )
-                    TextButton(
+                    FilledIconButton(
                         onClick = {
                             if (newTitle.isNotBlank()) {
                                 viewModel.addTodo(newTitle.trim(), newImportant)
                                 newTitle = ""
                                 newImportant = false
                             }
-                        }
+                        },
+                        modifier = Modifier.padding(4.dp),
+                        shape = RoundedCornerShape(50),
+                        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                            containerColor = Primary,
+                            contentColor = androidx.compose.ui.graphics.Color.White
+                        )
                     ) {
-                        Text("추가")
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "추가",
+                            modifier = Modifier.padding(2.dp)
+                        )
                     }
                 }
             }
@@ -165,8 +181,8 @@ fun HomeScreen(
                 ) {
                     Text(
                         text = "할 일이 없습니다",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSecondary
                     )
                 }
             } else {

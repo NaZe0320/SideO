@@ -4,4 +4,6 @@
     <string name="widget_description">할 일 목록을 확인하고 완료 처리할 수 있습니다</string>
     <string name="widget_check_todo">할 일 완료</string>
     <string name="widget_no_todos">할 일이 없습니다</string>
+    <string name="widget_label_small">Side-O (2x2)</string>
+    <string name="widget_label_medium">Side-O (4x2)</string>
 </resources>

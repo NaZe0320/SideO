@@ -1,6 +1,5 @@
 package com.naze.side_o.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,35 +8,46 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.naze.side_o.data.preferences.ThemeMode
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Color(0xFFA0A7FF),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF6B73CC),
+    onPrimaryContainer = Color.White,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+    background = Color(0xFF1A1D2E),
+    onBackground = Color(0xFFE8E9F0),
+    surface = Color(0xFF252838),
+    onSurface = Color(0xFFE8E9F0),
+    surfaceVariant = Color(0xFF2D3250),
+    onSurfaceVariant = Color(0xFF9EA1B1),
+    outline = TextSecondary
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Primary,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primaryContainer = Color(0xFFE0E2FF),
+    onPrimaryContainer = TextPrimary,
+    secondary = PurpleGrey40,
+    tertiary = Pink40,
+    background = Background,
+    onBackground = TextPrimary,
+    surface = Surface,
+    onSurface = TextPrimary,
+    surfaceVariant = Color(0xFFF0F2F8),
+    onSurfaceVariant = TextSecondary,
+    outline = TextSecondary
 )
 
 @Composable
 fun SideOTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val resolvedDarkTheme = when (themeMode) {
@@ -50,7 +60,6 @@ fun SideOTheme(
             val context = LocalContext.current
             if (resolvedDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         resolvedDarkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

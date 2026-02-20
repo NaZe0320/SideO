@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"
+    android:background="#F8FAFF"
     android:padding="12dp">
 
     <TextView
@@ -13,7 +13,7 @@
         android:text="@string/widget_title"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="#000000"
+        android:textColor="#2D3250"
         android:paddingBottom="8dp" />
 
     <!-- Todo Item 0 -->
@@ -41,7 +41,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:textSize="14sp"
-            android:textColor="#000000"
+            android:textColor="#2D3250"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -71,7 +71,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:textSize="14sp"
-            android:textColor="#000000"
+            android:textColor="#2D3250"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -101,7 +101,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:textSize="14sp"
-            android:textColor="#000000"
+            android:textColor="#2D3250"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -131,7 +131,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:textSize="14sp"
-            android:textColor="#000000"
+            android:textColor="#2D3250"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -161,7 +161,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:textSize="14sp"
-            android:textColor="#000000"
+            android:textColor="#2D3250"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -172,7 +172,7 @@
         android:layout_height="wrap_content"
         android:text="@string/widget_no_todos"
         android:textSize="14sp"
-        android:textColor="#888888"
+        android:textColor="#9EA1B1"
         android:gravity="center"
         android:paddingTop="16dp"
         android:visibility="gone" />

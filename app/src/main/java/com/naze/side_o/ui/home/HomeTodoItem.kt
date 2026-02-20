@@ -10,10 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,12 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
-import com.naze.side_o.ui.theme.CompleteGreen
-import com.naze.side_o.ui.theme.CompleteGreenContent
-import com.naze.side_o.ui.theme.DeleteRed
-import com.naze.side_o.ui.theme.DeleteRedContent
-import com.naze.side_o.ui.theme.StarOutlineGray
-import com.naze.side_o.ui.theme.StarYellow
+import com.naze.side_o.ui.theme.ActionComplete
+import com.naze.side_o.ui.theme.ActionCompleteContent
+import com.naze.side_o.ui.theme.ActionDelete
+import com.naze.side_o.ui.theme.ActionDeleteContent
+import com.naze.side_o.ui.theme.Primary
+import com.naze.side_o.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -143,7 +144,7 @@ fun HomeTodoItem(
         )
     }
 
-    val cardShape = RoundedCornerShape(12.dp)
+    val cardShape = RoundedCornerShape(24.dp)
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
@@ -155,9 +156,9 @@ fun HomeTodoItem(
                 colors = CardDefaults.cardColors(
                     containerColor = when (dismissState.dismissDirection) {
                         SwipeToDismissBoxValue.EndToStart ->
-                            if (swipeReversed) CompleteGreen else DeleteRed
+                            if (swipeReversed) ActionComplete else ActionDelete
                         SwipeToDismissBoxValue.StartToEnd ->
-                            if (swipeReversed) DeleteRed else CompleteGreen
+                            if (swipeReversed) ActionDelete else ActionComplete
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 )
@@ -181,26 +182,26 @@ fun HomeTodoItem(
                             SwipeToDismissBoxValue.EndToStart -> {
                                 if (swipeReversed) {
                                     Icon(
-                                        imageVector = Icons.Filled.Check,
+                                        imageVector = Icons.Filled.CheckCircle,
                                         contentDescription = null,
-                                        tint = CompleteGreenContent
+                                        tint = ActionCompleteContent
                                     )
                                     Text(
                                         "Complete",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = CompleteGreenContent,
+                                        color = ActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = DeleteRedContent
+                                        tint = ActionDeleteContent
                                     )
                                     Text(
                                         "Delete",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = DeleteRedContent,
+                                        color = ActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -210,24 +211,24 @@ fun HomeTodoItem(
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = DeleteRedContent
+                                        tint = ActionDeleteContent
                                     )
                                     Text(
                                         "Delete",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = DeleteRedContent,
+                                        color = ActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
-                                        imageVector = Icons.Filled.Check,
+                                        imageVector = Icons.Filled.CheckCircle,
                                         contentDescription = null,
-                                        tint = CompleteGreenContent
+                                        tint = ActionCompleteContent
                                     )
                                     Text(
                                         "Complete",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = CompleteGreenContent,
+                                        color = ActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -246,6 +247,7 @@ fun HomeTodoItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 4.dp)
+                .shadow(6.dp, cardShape, spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.08f))
                 .combinedClickable(
                     onClick = {
                         editTitle = todo.title
@@ -254,28 +256,35 @@ fun HomeTodoItem(
                     onLongClick = { showReorderDialog = true }
                 ),
             shape = cardShape,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
+                    .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(
+                    onClick = {
+                        viewModel.setImportant(todo.id, !todo.isImportant)
+                        if (!todo.isImportant && index > 0) {
+                            viewModel.reorder(allItems, index, 0)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (todo.isImportant) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                        contentDescription = if (todo.isImportant) "핀 해제" else "핀",
+                        tint = if (todo.isImportant) Primary else TextSecondary
+                    )
+                }
                 Text(
                     text = todo.title,
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(
-                    onClick = { viewModel.setImportant(todo.id, !todo.isImportant) }
-                ) {
-                    Icon(
-                        imageVector = if (todo.isImportant) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                        contentDescription = if (todo.isImportant) "중요 해제" else "중요",
-                        tint = if (todo.isImportant) StarYellow else StarOutlineGray
-                    )
-                }
             }
         }
     }

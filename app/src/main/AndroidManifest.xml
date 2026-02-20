@@ -36,6 +36,30 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/app_widget_info" />
         </receiver>
+        <receiver
+            android:name=".widget.TodoAppWidgetProviderSmall"
+            android:exported="true"
+            android:label="@string/widget_label_small">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.naze.side_o.ACTION_TOGGLE_TODO" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info_small" />
+        </receiver>
+        <receiver
+            android:name=".widget.TodoAppWidgetProviderMedium"
+            android:exported="true"
+            android:label="@string/widget_label_medium">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.naze.side_o.ACTION_TOGGLE_TODO" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info_medium" />
+        </receiver>
     </application>
 
 </manifest>

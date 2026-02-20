@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F8FAFF"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_title"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#2D3250"
+        android:paddingBottom="4dp" />
+
+    <LinearLayout android:id="@+id/widget_todo_item_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="4dp" android:gravity="center_vertical">
+        <ImageButton android:id="@+id/widget_todo_check_button_0" android:layout_width="24dp" android:layout_height="24dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@android:drawable/checkbox_off_background" android:contentDescription="@string/widget_check_todo" />
+        <TextView android:id="@+id/widget_todo_title_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:textSize="11sp" android:textColor="#2D3250" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_todo_item_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="4dp" android:gravity="center_vertical">
+        <ImageButton android:id="@+id/widget_todo_check_button_1" android:layout_width="24dp" android:layout_height="24dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@android:drawable/checkbox_off_background" android:contentDescription="@string/widget_check_todo" />
+        <TextView android:id="@+id/widget_todo_title_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:textSize="11sp" android:textColor="#2D3250" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_todo_item_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="4dp" android:gravity="center_vertical">
+        <ImageButton android:id="@+id/widget_todo_check_button_2" android:layout_width="24dp" android:layout_height="24dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@android:drawable/checkbox_off_background" android:contentDescription="@string/widget_check_todo" />
+        <TextView android:id="@+id/widget_todo_title_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:textSize="11sp" android:textColor="#2D3250" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_todo_item_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="4dp" android:gravity="center_vertical">
+        <ImageButton android:id="@+id/widget_todo_check_button_3" android:layout_width="24dp" android:layout_height="24dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@android:drawable/checkbox_off_background" android:contentDescription="@string/widget_check_todo" />
+        <TextView android:id="@+id/widget_todo_title_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:textSize="11sp" android:textColor="#2D3250" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/widget_todo_item_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="4dp" android:gravity="center_vertical">
+        <ImageButton android:id="@+id/widget_todo_check_button_4" android:layout_width="24dp" android:layout_height="24dp" android:background="?android:attr/selectableItemBackgroundBorderless" android:src="@android:drawable/checkbox_off_background" android:contentDescription="@string/widget_check_todo" />
+        <TextView android:id="@+id/widget_todo_title_4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="4dp" android:textSize="11sp" android:textColor="#2D3250" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+
+    <TextView android:id="@+id/widget_empty_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/widget_no_todos" android:textSize="11sp" android:textColor="#9EA1B1" android:gravity="center" android:paddingTop="8dp" android:visibility="gone" />
+</LinearLayout>

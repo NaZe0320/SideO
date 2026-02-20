@@ -23,9 +23,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.DarkMode
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +56,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.preferences.ThemeMode
+import com.naze.side_o.ui.theme.ActionComplete
+import com.naze.side_o.ui.theme.ActionDelete
+import com.naze.side_o.ui.theme.Primary
+import com.naze.side_o.ui.theme.TextSecondary
 
 @Composable
 fun SettingsScreen(
@@ -82,27 +89,34 @@ fun SettingsScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Surface(modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)) {
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "뒤로"
+                            contentDescription = "뒤로",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text(
-                        text = "설정",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 48.dp),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Settings",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Box(modifier = Modifier.padding(48.dp)) {}
                 }
             }
         }
@@ -112,136 +126,132 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .padding(contentPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
         ) {
-            // Premium Section (주석 처리)
-            /*
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 32.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Box(modifier = Modifier.padding(20.dp)) {
-                    Column {
-                        Text(
-                            text = "Go Premium",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Text(
-                            text = "광고 제거 및 스와이프 커스터마이징",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                        OutlinedButton(
-                            onClick = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("준비 중입니다.")
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Text("업그레이드", style = MaterialTheme.typography.labelLarge)
-                        }
-                    }
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(96.dp)
-                            .offset(x = 32.dp, y = (-24).dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.1f))
-                    ) {}
-                }
-            }
-            */
-
-            // General Section
-            SectionLabel(text = "일반")
+            SectionLabel(text = "Preferences")
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column {
-                    SettingsSwitchItem(
-                        icon = Icons.Outlined.SwapHoriz,
-                        iconTint = MaterialTheme.colorScheme.primary,
-                        title = "스와이프 방향",
-                        subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
-                        checked = swipeReversed,
-                        onCheckedChange = { viewModel.setSwipeReversed(it) }
-                    )
-                    HorizontalDivider()
-                    SettingsSwitchItem(
-                        icon = Icons.Outlined.Notifications,
-                        title = "알림",
-                        subtitle = "할 일 알림",
-                        checked = remindersEnabled,
-                        onCheckedChange = { viewModel.setRemindersEnabled(it) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Account & Data Section (주석 처리)
-            /*
-            SectionLabel(text = "계정 및 데이터")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                SettingsRowItem(
-                    icon = Icons.Outlined.CloudSync,
-                    title = "데이터 관리",
-                    subtitle = "Google Drive 백업 상태",
-                    trailing = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "연동됨",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                    SettingsRowItem(
+                        icon = Icons.Outlined.Palette,
+                        iconTint = Primary,
+                        title = "테마 색상",
+                        subtitle = "Soft Lavender",
+                        trailing = {
                             Icon(
                                 imageVector = Icons.Outlined.ChevronRight,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = TextSecondary
                             )
-                        }
-                    },
-                    onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar("준비 중입니다.")
-                        }
-                    }
-                )
+                        },
+                        onClick = { showThemeDialog = true }
+                    )
+                    HorizontalDivider()
+                    SettingsRowItem(
+                        icon = Icons.Outlined.PushPin,
+                        iconTint = ActionComplete,
+                        title = "핀 기본",
+                        subtitle = "Always visible",
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        },
+                        onClick = { }
+                    )
+                }
             }
-            */
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Appearance Section
+            SectionLabel(text = "Gesture Settings")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsSwitchItem(
+                    icon = Icons.Outlined.SwapHoriz,
+                    iconTint = ActionDelete,
+                    title = "스와이프 방향 반전",
+                    subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
+                    checked = swipeReversed,
+                    onCheckedChange = { viewModel.setSwipeReversed(it) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SectionLabel(text = "Data & Privacy")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column {
+                    SettingsRowItem(
+                        icon = Icons.Outlined.CloudSync,
+                        title = "iCloud Sync",
+                        subtitle = "준비 중",
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        },
+                        onClick = { }
+                    )
+                    HorizontalDivider()
+                    SettingsRowItem(
+                        icon = Icons.Outlined.Lock,
+                        title = "Passcode Lock",
+                        subtitle = "준비 중",
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        },
+                        onClick = { }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsSwitchItem(
+                    icon = Icons.Outlined.Notifications,
+                    title = "알림",
+                    subtitle = "할 일 알림",
+                    checked = remindersEnabled,
+                    onCheckedChange = { viewModel.setRemindersEnabled(it) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             SectionLabel(text = "디자인")
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 SettingsRowItem(
                     icon = Icons.Outlined.DarkMode,
@@ -255,14 +265,13 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Outlined.ChevronRight,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = TextSecondary
                         )
                     },
                     onClick = { showThemeDialog = true }
                 )
             }
 
-            // Footer
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -270,9 +279,9 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Version 1.0",
+                    text = "Version 1.0 • Made with Love",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = TextSecondary
                 )
             }
         }
@@ -282,10 +291,10 @@ fun SettingsScreen(
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text = text,
+        text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+        color = TextSecondary,
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
     )
 }
 
@@ -294,7 +303,7 @@ private fun HorizontalDivider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 20.dp)
             .height(1.dp)
             .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     )
@@ -312,16 +321,16 @@ private fun SettingsSwitchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(
-                    if (iconTint == MaterialTheme.colorScheme.primary)
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                    if (iconTint == MaterialTheme.colorScheme.primary || iconTint == Primary || iconTint == ActionDelete || iconTint == ActionComplete)
+                        iconTint.copy(alpha = 0.12f)
                     else
                         MaterialTheme.colorScheme.surfaceVariant
                 ),
@@ -341,13 +350,13 @@ private fun SettingsSwitchItem(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TextSecondary
             )
         }
         Switch(
@@ -367,26 +376,32 @@ private fun SettingsRowItem(
     title: String,
     subtitle: String,
     trailing: @Composable () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (iconTint == Primary || iconTint == ActionComplete || iconTint == ActionDelete)
+                        iconTint.copy(alpha = 0.12f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = iconTint,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -397,13 +412,13 @@ private fun SettingsRowItem(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = TextSecondary
             )
         }
         trailing()
