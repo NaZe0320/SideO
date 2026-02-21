@@ -7,16 +7,17 @@ import androidx.lifecycle.viewModelScope
 import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.data.repository.TodoRepository
 import com.naze.side_o.widget.TodoAppWidgetProvider
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private const val RECENTLY_DAYS_MS = 7L * 24 * 60 * 60 * 1000
 private const val LAST_WEEK_DAYS_MS = 14L * 24 * 60 * 60 * 1000
+private const val PERMANENT_DELETE_DELAY_MS = 3000L
 
 data class ArchiveSection(
     val title: String,
@@ -34,6 +35,14 @@ class ArchiveViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    val deletedTodos: StateFlow<List<TodoEntity>> =
+        repository.getRecentlyDeletedTodos()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
 
     val sections: StateFlow<List<ArchiveSection>> = completedTodos
         .map { list ->
@@ -63,6 +72,9 @@ class ArchiveViewModel(
             initialValue = emptyList()
         )
 
+    private val pendingDeleteJobs = mutableMapOf<Long, Job>()
+    private val pendingDeleteLock = Any()
+
     fun uncomplete(id: Long) {
         viewModelScope.launch {
             repository.setCompleted(id, false)
@@ -70,34 +82,45 @@ class ArchiveViewModel(
         }
     }
 
-    fun markDeleted(id: Long) {
+    fun restore(id: Long) {
         viewModelScope.launch {
-            repository.markDeleted(id)
+            repository.restore(id)
             TodoAppWidgetProvider.updateAllWidgets(application)
         }
     }
 
-    private val _selectedIds = MutableStateFlow<Set<Long>>(emptySet())
-    val selectedIds: StateFlow<Set<Long>> = _selectedIds.asStateFlow()
-
-    fun toggleSelection(id: Long) {
-        _selectedIds.value = if (id in _selectedIds.value) {
-            _selectedIds.value - id
-        } else {
-            _selectedIds.value + id
+    /** Schedules permanent delete after delay. Call cancelPendingDelete to undo. */
+    fun schedulePermanentDelete(id: Long) {
+        synchronized(pendingDeleteLock) {
+            pendingDeleteJobs[id]?.cancel()
+            val job = viewModelScope.launch {
+                delay(PERMANENT_DELETE_DELAY_MS)
+                repository.deletePermanently(id)
+                TodoAppWidgetProvider.updateAllWidgets(application)
+            }
+            job.invokeOnCompletion {
+                synchronized(pendingDeleteLock) { pendingDeleteJobs.remove(id) }
+            }
+            pendingDeleteJobs[id] = job
         }
     }
 
-    fun clearSelection() {
-        _selectedIds.value = emptySet()
+    fun cancelPendingDelete(id: Long) {
+        synchronized(pendingDeleteLock) {
+            pendingDeleteJobs.remove(id)?.cancel()
+        }
     }
 
-    fun deleteSelected() {
+    fun recomplete(id: Long) {
         viewModelScope.launch {
-            _selectedIds.value.forEach { id ->
-                repository.markDeleted(id)
-            }
-            _selectedIds.value = emptySet()
+            repository.setCompleted(id, true)
+            TodoAppWidgetProvider.updateAllWidgets(application)
+        }
+    }
+
+    fun markDeletedAgain(id: Long) {
+        viewModelScope.launch {
+            repository.markDeleted(id)
             TodoAppWidgetProvider.updateAllWidgets(application)
         }
     }

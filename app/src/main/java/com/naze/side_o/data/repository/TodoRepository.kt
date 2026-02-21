@@ -59,6 +59,10 @@ class TodoRepository(
         dao.restore(id)
     }
 
+    suspend fun deletePermanently(id: Long) {
+        dao.deletePermanently(id)
+    }
+
     /**
      * 순서 변경: 주어진 id 목록 순서대로 orderIndex를 0, 1, 2, ... 로 갱신한다.
      * (꾹 눌러 드래그 후 놓은 최종 순서 리스트를 넘기면 된다.)

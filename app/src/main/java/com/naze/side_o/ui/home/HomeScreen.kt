@@ -27,6 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +38,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.naze.side_o.TodoApplication
 import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -56,10 +62,26 @@ fun HomeScreen(
     val activeTodos by viewModel.activeTodos.collectAsState()
     var newTitle by remember { mutableStateOf("") }
     var newImportant by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = "실행취소",
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                onUndo()
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
@@ -201,7 +223,13 @@ fun HomeScreen(
                                 todo = todo,
                                 viewModel = viewModel,
                                 allItems = activeTodos,
-                                swipeReversed = swipeReversedFromPrefs
+                                swipeReversed = swipeReversedFromPrefs,
+                                onAfterComplete = { id ->
+                                    showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
+                                },
+                                onAfterDelete = { id ->
+                                    showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
+                                }
                             )
                         }
                     }

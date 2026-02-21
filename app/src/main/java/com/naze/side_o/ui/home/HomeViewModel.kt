@@ -60,6 +60,13 @@ class HomeViewModel(
         }
     }
 
+    fun restore(id: Long) {
+        viewModelScope.launch {
+            repository.restore(id)
+            TodoAppWidgetProvider.updateAllWidgets(application)
+        }
+    }
+
     fun reorder(items: List<TodoEntity>, fromIndex: Int, toIndex: Int) {
         if (fromIndex == toIndex || fromIndex !in items.indices || toIndex !in items.indices) return
         viewModelScope.launch {

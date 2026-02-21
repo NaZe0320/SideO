@@ -42,4 +42,7 @@ interface TodoDao {
 
     @Query("UPDATE todos SET isDeleted = 0, deletedAt = null WHERE id = :id")
     suspend fun restore(id: Long)
+
+    @Query("DELETE FROM todos WHERE id = :id")
+    suspend fun deletePermanently(id: Long)
 }
