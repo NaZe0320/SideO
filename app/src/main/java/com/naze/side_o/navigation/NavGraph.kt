@@ -13,8 +13,6 @@ import com.naze.side_o.TodoApplication
 import com.naze.side_o.ui.archive.ArchiveScreen
 import com.naze.side_o.ui.archive.ArchiveViewModel
 import com.naze.side_o.ui.archive.ArchiveViewModelFactory
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import com.naze.side_o.ui.home.HomeScreen
 import com.naze.side_o.ui.home.HomeViewModel
 import com.naze.side_o.ui.home.HomeViewModelFactory
@@ -41,10 +39,8 @@ fun NavGraph(
             val viewModel: HomeViewModel = viewModel(
                 factory = HomeViewModelFactory(repository, app)
             )
-            val swipeReversed by app.settingsRepository.swipeReversed.collectAsState(initial = false)
             HomeScreen(
                 viewModel = viewModel,
-                swipeReversed = swipeReversed,
                 onNavigateToArchive = { navController.navigate(Screen.Archive.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
             )

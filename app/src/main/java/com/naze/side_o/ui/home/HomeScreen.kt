@@ -37,19 +37,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.naze.side_o.TodoApplication
 import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    swipeReversed: Boolean = false,
     onNavigateToArchive: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val app = LocalContext.current.applicationContext as TodoApplication
+    val swipeReversedFromPrefs by app.settingsRepository.swipeReversed.collectAsState(initial = false)
     val activeTodos by viewModel.activeTodos.collectAsState()
     var newTitle by remember { mutableStateOf("") }
     var newImportant by remember { mutableStateOf(false) }
@@ -198,7 +201,7 @@ fun HomeScreen(
                                 todo = todo,
                                 viewModel = viewModel,
                                 allItems = activeTodos,
-                                swipeReversed = swipeReversed
+                                swipeReversed = swipeReversedFromPrefs
                             )
                         }
                     }

@@ -61,6 +61,7 @@ fun HomeTodoItem(
                     true
                 }
                 SwipeToDismissBoxValue.StartToEnd -> {
+
                     if (swipeReversed) viewModel.markDeleted(todo.id)
                     else viewModel.setCompleted(todo.id, true)
                     true
