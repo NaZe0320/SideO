@@ -163,7 +163,7 @@ fun HomeTodoItem(
             Card(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(vertical = 4.dp),
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = when (dismissState.dismissDirection) {
@@ -258,7 +258,7 @@ fun HomeTodoItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .padding(vertical = 4.dp)
                 .shadow(6.dp, cardShape, spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.08f))
                 .combinedClickable(
                     onClick = {

@@ -214,7 +214,9 @@ fun HomeScreen(
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     content = {
                         items(
