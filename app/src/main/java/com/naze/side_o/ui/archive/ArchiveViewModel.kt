@@ -9,8 +9,10 @@ import com.naze.side_o.data.repository.TodoRepository
 import com.naze.side_o.widget.TodoAppWidgetProvider
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -75,6 +77,9 @@ class ArchiveViewModel(
     private val pendingDeleteJobs = mutableMapOf<Long, Job>()
     private val pendingDeleteLock = Any()
 
+    private val _pendingDeleteIds = MutableStateFlow<Set<Long>>(emptySet())
+    val pendingDeleteIds: StateFlow<Set<Long>> = _pendingDeleteIds.asStateFlow()
+
     fun uncomplete(id: Long) {
         viewModelScope.launch {
             repository.setCompleted(id, false)
@@ -92,6 +97,7 @@ class ArchiveViewModel(
     /** Schedules permanent delete after delay. Call cancelPendingDelete to undo. */
     fun schedulePermanentDelete(id: Long) {
         synchronized(pendingDeleteLock) {
+            _pendingDeleteIds.value = _pendingDeleteIds.value + id
             pendingDeleteJobs[id]?.cancel()
             val job = viewModelScope.launch {
                 delay(PERMANENT_DELETE_DELAY_MS)
@@ -99,7 +105,10 @@ class ArchiveViewModel(
                 TodoAppWidgetProvider.updateAllWidgets(application)
             }
             job.invokeOnCompletion {
-                synchronized(pendingDeleteLock) { pendingDeleteJobs.remove(id) }
+                synchronized(pendingDeleteLock) {
+                    pendingDeleteJobs.remove(id)
+                    _pendingDeleteIds.value = _pendingDeleteIds.value - id
+                }
             }
             pendingDeleteJobs[id] = job
         }
@@ -108,6 +117,7 @@ class ArchiveViewModel(
     fun cancelPendingDelete(id: Long) {
         synchronized(pendingDeleteLock) {
             pendingDeleteJobs.remove(id)?.cancel()
+            _pendingDeleteIds.value = _pendingDeleteIds.value - id
         }
     }
 

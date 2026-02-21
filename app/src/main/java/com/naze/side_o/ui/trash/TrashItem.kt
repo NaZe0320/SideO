@@ -75,7 +75,7 @@ fun TrashItem(
             Card(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(vertical = 4.dp),
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = when (dismissState.dismissDirection) {
@@ -170,7 +170,7 @@ fun TrashItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(vertical = 4.dp),
             shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,8 +26,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,6 +56,7 @@ fun ArchiveScreen(
     val swipeReversed by app.settingsRepository.swipeReversed.collectAsState(initial = false)
     val sections by viewModel.sections.collectAsState()
     val deletedTodos by viewModel.deletedTodos.collectAsState()
+    val pendingDeleteIds by viewModel.pendingDeleteIds.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(0) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -77,7 +80,9 @@ fun ArchiveScreen(
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState, modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+        },
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
@@ -107,9 +112,15 @@ fun ArchiveScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Box(modifier = Modifier.padding(8.dp)) {}
+                        IconButton(onClick = { /* TODO: 메뉴 */ }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "더보기",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    TabRow(
+                    SecondaryTabRow(
                         selectedTabIndex = selectedTabIndex,
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -137,6 +148,8 @@ fun ArchiveScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 sections.forEach { section ->
+                    val filteredItems = section.items.filter { it.id !in pendingDeleteIds }
+                    if (filteredItems.isEmpty()) return@forEach
                     item(key = "header_${section.title}") {
                         Text(
                             text = section.title.uppercase(),
@@ -146,7 +159,7 @@ fun ArchiveScreen(
                         )
                     }
                     items(
-                        items = section.items,
+                        items = filteredItems,
                         key = { it.id }
                     ) { todo ->
                         ArchiveItem(
@@ -181,7 +194,7 @@ fun ArchiveScreen(
                     )
                 }
                 items(
-                    items = deletedTodos,
+                    items = deletedTodos.filter { it.id !in pendingDeleteIds },
                     key = { it.id }
                 ) { todo ->
                     TrashItem(
