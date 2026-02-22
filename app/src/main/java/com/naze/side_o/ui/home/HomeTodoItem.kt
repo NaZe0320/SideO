@@ -1,6 +1,7 @@
 package com.naze.side_o.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,13 +15,11 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
-import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
@@ -259,7 +258,6 @@ fun HomeTodoItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp)
-                .shadow(6.dp, cardShape, spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.08f))
                 .combinedClickable(
                     onClick = {
                         editTitle = todo.title
@@ -277,20 +275,19 @@ fun HomeTodoItem(
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = {
-                        viewModel.setImportant(todo.id, !todo.isImportant)
-                        if (!todo.isImportant && index > 0) {
-                            viewModel.reorder(allItems, index, 0)
+                Icon(
+                    imageVector = if (todo.isImportant) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                    contentDescription = if (todo.isImportant) "핀 해제" else "핀",
+                    tint = if (todo.isImportant) Primary else TextSecondary,
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .clickable {
+                            viewModel.setImportant(todo.id, !todo.isImportant)
+                            if (!todo.isImportant && index > 0) {
+                                viewModel.reorder(allItems, index, 0)
+                            }
                         }
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (todo.isImportant) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                        contentDescription = if (todo.isImportant) "핀 해제" else "핀",
-                        tint = if (todo.isImportant) Primary else TextSecondary
-                    )
-                }
+                )
                 Text(
                     text = todo.title,
                     style = MaterialTheme.typography.bodyLarge,
