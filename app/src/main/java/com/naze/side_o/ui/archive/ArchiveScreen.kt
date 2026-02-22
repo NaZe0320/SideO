@@ -103,6 +103,7 @@ fun ArchiveScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -141,6 +142,7 @@ fun ArchiveScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
+                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {

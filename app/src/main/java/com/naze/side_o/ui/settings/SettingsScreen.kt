@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -95,6 +97,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(contentPadding)
+                .windowInsetsPadding(WindowInsets.navigationBars)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
         ) {
