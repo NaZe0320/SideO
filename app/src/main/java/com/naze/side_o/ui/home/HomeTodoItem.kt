@@ -22,11 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
+import com.naze.side_o.ui.components.SwipeDirection
+import com.naze.side_o.ui.components.SwipeToDismissByPositionBox
 import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
@@ -53,34 +52,6 @@ fun HomeTodoItem(
     onAfterComplete: ((Long) -> Unit)? = null,
     onAfterDelete: ((Long) -> Unit)? = null
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            when (value) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    if (swipeReversed) {
-                        viewModel.setCompleted(todo.id, true)
-                        onAfterComplete?.invoke(todo.id)
-                    } else {
-                        viewModel.markDeleted(todo.id)
-                        onAfterDelete?.invoke(todo.id)
-                    }
-                    true
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    if (swipeReversed) {
-                        viewModel.markDeleted(todo.id)
-                        onAfterDelete?.invoke(todo.id)
-                    } else {
-                        viewModel.setCompleted(todo.id, true)
-                        onAfterComplete?.invoke(todo.id)
-                    }
-                    true
-                }
-                else -> false
-            }
-        },
-        positionalThreshold = { totalDistance -> totalDistance * 0.5f }
-    )
     var showEditDialog by remember { mutableStateOf(false) }
     var editTitle by remember(todo.id) { mutableStateOf(todo.title) }
     var showReorderDialog by remember { mutableStateOf(false) }
@@ -156,23 +127,23 @@ fun HomeTodoItem(
     }
 
     val cardShape = RoundedCornerShape(24.dp)
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
+    SwipeToDismissByPositionBox(
+        modifier = Modifier.fillMaxWidth(),
+        thresholdFraction = 0.5f,
+        backgroundContent = { direction ->
             Card(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxSize(),
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
-                    containerColor = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart ->
+                    containerColor = when (direction) {
+                        SwipeDirection.EndToStart ->
                             if (swipeReversed) ActionComplete else ActionDelete
-                        SwipeToDismissBoxValue.StartToEnd ->
+                        SwipeDirection.StartToEnd ->
                             if (swipeReversed) ActionDelete else ActionComplete
-                        else -> MaterialTheme.colorScheme.surfaceVariant
+                        null -> MaterialTheme.colorScheme.surfaceVariant
                     }
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -183,14 +154,14 @@ fun HomeTodoItem(
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = when (dismissState.dismissDirection) {
-                            SwipeToDismissBoxValue.EndToStart -> Arrangement.End
-                            SwipeToDismissBoxValue.StartToEnd -> Arrangement.Start
-                            else -> Arrangement.Center
+                        horizontalArrangement = when (direction) {
+                            SwipeDirection.EndToStart -> Arrangement.End
+                            SwipeDirection.StartToEnd -> Arrangement.Start
+                            null -> Arrangement.Center
                         }
                     ) {
-                        when (dismissState.dismissDirection) {
-                            SwipeToDismissBoxValue.EndToStart -> {
+                        when (direction) {
+                            SwipeDirection.EndToStart -> {
                                 if (swipeReversed) {
                                     Icon(
                                         imageVector = Icons.Filled.CheckCircle,
@@ -217,7 +188,7 @@ fun HomeTodoItem(
                                     )
                                 }
                             }
-                            SwipeToDismissBoxValue.StartToEnd -> {
+                            SwipeDirection.StartToEnd -> {
                                 if (swipeReversed) {
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
@@ -244,15 +215,30 @@ fun HomeTodoItem(
                                     )
                                 }
                             }
-                            else -> {}
+                            null -> {}
                         }
                     }
                 }
             }
         },
-        enableDismissFromStartToEnd = true,
-        enableDismissFromEndToStart = true,
-        modifier = Modifier.fillMaxWidth()
+        onDismissStartToEnd = {
+            if (swipeReversed) {
+                viewModel.markDeleted(todo.id)
+                onAfterDelete?.invoke(todo.id)
+            } else {
+                viewModel.setCompleted(todo.id, true)
+                onAfterComplete?.invoke(todo.id)
+            }
+        },
+        onDismissEndToStart = {
+            if (swipeReversed) {
+                viewModel.setCompleted(todo.id, true)
+                onAfterComplete?.invoke(todo.id)
+            } else {
+                viewModel.markDeleted(todo.id)
+                onAfterDelete?.invoke(todo.id)
+            }
+        }
     ) {
         Card(
             modifier = Modifier

@@ -17,16 +17,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
+import com.naze.side_o.ui.components.SwipeDirection
+import com.naze.side_o.ui.components.SwipeToDismissByPositionBox
 import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
@@ -47,25 +46,6 @@ fun ArchiveItem(
     swipeReversed: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            when (value) {
-                SwipeToDismissBoxValue.EndToStart -> {
-                    if (swipeReversed) onRestore()
-                    else onDeletePermanent()
-                    true
-                }
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    if (swipeReversed) onDeletePermanent()
-                    else onRestore()
-                    true
-                }
-                else -> false
-            }
-        },
-        positionalThreshold = { totalDistance -> totalDistance * 0.5f }
-    )
-
     val completedAt = todo.completedAt ?: todo.createdAt
     val daysAgo = daysAgoFrom(completedAt)
     val completedAgoText = when {
@@ -75,23 +55,23 @@ fun ArchiveItem(
     }
 
     val cardShape = RoundedCornerShape(24.dp)
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
+    SwipeToDismissByPositionBox(
+        modifier = modifier.fillMaxWidth(),
+        thresholdFraction = 0.5f,
+        backgroundContent = { direction ->
             Card(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxSize(),
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
-                    containerColor = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart ->
+                    containerColor = when (direction) {
+                        SwipeDirection.EndToStart ->
                             if (swipeReversed) ActionComplete else ActionDelete
-                        SwipeToDismissBoxValue.StartToEnd ->
+                        SwipeDirection.StartToEnd ->
                             if (swipeReversed) ActionDelete else ActionComplete
-                        else -> MaterialTheme.colorScheme.surfaceVariant
+                        null -> MaterialTheme.colorScheme.surfaceVariant
                     }
-                )
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -102,14 +82,14 @@ fun ArchiveItem(
                             .fillMaxWidth()
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = when (dismissState.dismissDirection) {
-                            SwipeToDismissBoxValue.EndToStart -> Arrangement.End
-                            SwipeToDismissBoxValue.StartToEnd -> Arrangement.Start
-                            else -> Arrangement.Center
+                        horizontalArrangement = when (direction) {
+                            SwipeDirection.EndToStart -> Arrangement.End
+                            SwipeDirection.StartToEnd -> Arrangement.Start
+                            null -> Arrangement.Center
                         }
                     ) {
-                        when (dismissState.dismissDirection) {
-                            SwipeToDismissBoxValue.EndToStart -> {
+                        when (direction) {
+                            SwipeDirection.EndToStart -> {
                                 if (swipeReversed) {
                                     Icon(
                                         imageVector = Icons.Filled.DoneAll,
@@ -136,7 +116,7 @@ fun ArchiveItem(
                                     )
                                 }
                             }
-                            SwipeToDismissBoxValue.StartToEnd -> {
+                            SwipeDirection.StartToEnd -> {
                                 if (swipeReversed) {
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
@@ -163,15 +143,20 @@ fun ArchiveItem(
                                     )
                                 }
                             }
-                            else -> {}
+                            null -> {}
                         }
                     }
                 }
             }
         },
-        enableDismissFromStartToEnd = true,
-        enableDismissFromEndToStart = true,
-        modifier = modifier.fillMaxWidth()
+        onDismissStartToEnd = {
+            if (swipeReversed) onDeletePermanent()
+            else onRestore()
+        },
+        onDismissEndToStart = {
+            if (swipeReversed) onRestore()
+            else onDeletePermanent()
+        }
     ) {
         Card(
             modifier = Modifier
