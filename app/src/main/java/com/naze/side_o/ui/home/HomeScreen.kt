@@ -2,7 +2,6 @@ package com.naze.side_o.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -88,8 +87,55 @@ fun HomeScreen(
                 onArchiveClick = onNavigateToArchive,
                 onSettingsClick = onNavigateToSettings
             )
-        },
-        bottomBar = {
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (activeTodos.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "할 일이 없습니다",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    content = {
+                        items(
+                            items = activeTodos,
+                            key = { it.id }
+                        ) { todo ->
+                            HomeTodoItem(
+                                todo = todo,
+                                viewModel = viewModel,
+                                allItems = activeTodos,
+                                swipeReversed = swipeReversedFromPrefs,
+                                onAfterComplete = { id ->
+                                    showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
+                                },
+                                onAfterDelete = { id ->
+                                    showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
+                                }
+                            )
+                        }
+                    }
+                )
+            }
             Surface(
                 color = MaterialTheme.colorScheme.background,
                 modifier = Modifier
@@ -163,52 +209,6 @@ fun HomeScreen(
                         )
                     }
                 }
-            }
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            if (activeTodos.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "할 일이 없습니다",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    content = {
-                        items(
-                            items = activeTodos,
-                            key = { it.id }
-                        ) { todo ->
-                            HomeTodoItem(
-                                todo = todo,
-                                viewModel = viewModel,
-                                allItems = activeTodos,
-                                swipeReversed = swipeReversedFromPrefs,
-                                onAfterComplete = { id ->
-                                    showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
-                                },
-                                onAfterDelete = { id ->
-                                    showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
-                                }
-                            )
-                        }
-                    }
-                )
             }
         }
     }
