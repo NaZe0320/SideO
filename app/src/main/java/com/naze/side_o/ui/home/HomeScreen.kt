@@ -114,7 +114,7 @@ fun HomeScreen(
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     content = {
                         items(
                             items = activeTodos,

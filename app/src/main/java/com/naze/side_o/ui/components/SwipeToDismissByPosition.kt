@@ -76,6 +76,7 @@ fun SwipeToDismissBox(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .onSizeChanged { size -> widthPx = size.width.toFloat() }
         ) {
             // 배경: 이 Box와 동일 크기
             Box(
