@@ -41,6 +41,7 @@ enum class SwipeDirection {
 @Composable
 fun SwipeToDismissBox(
     modifier: Modifier = Modifier,
+    clipToBounds: Boolean = true,
     thresholdFraction: Float = 0.5f,
     onDismissStartToEnd: () -> Unit = {},
     onDismissEndToStart: () -> Unit = {},
@@ -70,7 +71,7 @@ fun SwipeToDismissBox(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .clipToBounds()
+            .then(if (clipToBounds) Modifier.clipToBounds() else Modifier)
     ) {
         // 내부 Box: 높이는 콘텐츠만으로 결정 → 배경/콘텐츠가 이 크기에 맞춰 동일해짐
         Box(

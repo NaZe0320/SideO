@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -40,12 +40,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.TodoApplication
 import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -61,6 +64,15 @@ fun HomeScreen(
     var newImportant by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    var draggedIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffsetY by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    val itemHeightPx = with(density) { 72.dp.toPx() }
+    val dropTargetIndex: Int? = when (val d = draggedIndex) {
+        null -> null
+        else -> (d + (dragOffsetY / itemHeightPx).roundToInt()).coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
+    }
 
     fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
         scope.launch {
@@ -116,12 +128,33 @@ fun HomeScreen(
                         .padding(horizontal = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     content = {
-                        items(
+                        itemsIndexed(
                             items = activeTodos,
-                            key = { it.id }
-                        ) { todo ->
+                            key = { _, it -> it.id }
+                        ) { index, todo ->
+                            val topGapDp: Dp = if (index == dropTargetIndex) 32.dp else 0.dp
                             HomeTodoItem(
                                 todo = todo,
+                                index = index,
+                                isDragging = draggedIndex == index,
+                                isDimmed = draggedIndex != null && draggedIndex != index,
+                                dragOffsetYPx = if (draggedIndex == index) dragOffsetY else 0f,
+                                onDragStart = {
+                                    draggedIndex = index
+                                    dragOffsetY = 0f
+                                },
+                                onDragMove = { deltaY: Float -> dragOffsetY += deltaY },
+                                onDragEnd = {
+                                    val from = draggedIndex ?: return@HomeTodoItem
+                                    val to = (from + (dragOffsetY / itemHeightPx).roundToInt())
+                                        .coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
+                                    if (from != to) {
+                                        viewModel.reorder(activeTodos, from, to)
+                                    }
+                                    draggedIndex = null
+                                    dragOffsetY = 0f
+                                },
+                                topGapDp = topGapDp,
                                 viewModel = viewModel,
                                 allItems = activeTodos,
                                 swipeReversed = swipeReversedFromPrefs,

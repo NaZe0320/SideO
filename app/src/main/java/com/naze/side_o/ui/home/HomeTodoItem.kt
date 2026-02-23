@@ -3,6 +3,7 @@ package com.naze.side_o.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,9 +31,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.ui.components.SwipeDirection
@@ -47,6 +56,14 @@ import com.naze.side_o.ui.theme.TextSecondary
 @Composable
 fun HomeTodoItem(
     todo: TodoEntity,
+    index: Int,
+    isDragging: Boolean,
+    isDimmed: Boolean,
+    dragOffsetYPx: Float = 0f,
+    onDragStart: () -> Unit,
+    onDragMove: (deltaY: Float) -> Unit,
+    onDragEnd: () -> Unit,
+    topGapDp: Dp,
     viewModel: HomeViewModel,
     allItems: List<TodoEntity>,
     swipeReversed: Boolean = false,
@@ -55,8 +72,6 @@ fun HomeTodoItem(
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var editTitle by remember(todo.id) { mutableStateOf(todo.title) }
-    var showReorderDialog by remember { mutableStateOf(false) }
-    val index = allItems.indexOfFirst { it.id == todo.id }
 
     if (showEditDialog) {
         AlertDialog(
@@ -113,63 +128,22 @@ fun HomeTodoItem(
         )
     }
 
-    if (showReorderDialog) {
-        AlertDialog(
-            onDismissRequest = { showReorderDialog = false },
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    "순서 변경",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            text = {
-                Text(
-                    "위로 또는 아래로 이동",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(
-                        onClick = {
-                            if (index > 0) {
-                                viewModel.reorder(allItems, index, index - 1)
-                                showReorderDialog = false
-                            }
-                        }
-                    ) {
-                        Text("위로")
-                    }
-                    TextButton(
-                        onClick = {
-                            if (index in 0 until allItems.lastIndex) {
-                                viewModel.reorder(allItems, index, index + 1)
-                                showReorderDialog = false
-                            }
-                        }
-                    ) {
-                        Text("아래로")
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showReorderDialog = false }) {
-                    Text("닫기")
-                }
-            }
-        )
-    }
-
     val cardShape = RoundedCornerShape(24.dp)
+    val animatedGapDp by animateDpAsState(topGapDp, animationSpec = tween(200))
+    val scale by animateFloatAsState(if (isDragging) 1.05f else 1f, animationSpec = tween(200))
+    val alpha by animateFloatAsState(if (isDimmed) 0.6f else 1f, animationSpec = tween(150))
     SwipeToDismissBox(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .zIndex(if (isDragging) 1f else 0f)
+            .fillMaxWidth()
+            .padding(top = animatedGapDp),
+        clipToBounds = !isDragging,
         thresholdFraction = 0.5f,
         backgroundContent = { direction ->
             Card(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(if (isDragging) 0f else 1f),
                 shape = cardShape,
                 colors = CardDefaults.cardColors(
                     containerColor = when (direction) {
@@ -280,16 +254,21 @@ fun HomeTodoItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
+                .graphicsLayer(
+                    scaleX = scale,
+                    scaleY = scale,
+                    alpha = alpha,
+                    translationY = if (isDragging) dragOffsetYPx else 0f
+                )
                 .combinedClickable(
                     onClick = {
                         editTitle = todo.title
                         showEditDialog = true
-                    },
-                    onLongClick = { showReorderDialog = true }
+                    }
                 ),
             shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 0.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -301,7 +280,16 @@ fun HomeTodoItem(
                     imageVector = Icons.Filled.DragIndicator,
                     contentDescription = "이동 가능",
                     tint = TextSecondary,
-                    modifier = Modifier.padding(end = 16.dp)
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .pointerInput(Unit) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { onDragStart() },
+                                onDrag = { _, delta -> onDragMove(delta.y) },
+                                onDragEnd = onDragEnd,
+                                onDragCancel = onDragEnd
+                            )
+                        }
                 )
                 Text(
                     text = todo.title,
