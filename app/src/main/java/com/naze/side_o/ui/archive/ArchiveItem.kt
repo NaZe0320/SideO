@@ -10,8 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +29,6 @@ import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
 import com.naze.side_o.ui.theme.ActionDeleteContent
-import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -92,7 +90,7 @@ fun ArchiveItem(
                             SwipeDirection.EndToStart -> {
                                 if (swipeReversed) {
                                     Icon(
-                                        imageVector = Icons.Filled.DoneAll,
+                                        imageVector = Icons.Outlined.Restore,
                                         contentDescription = null,
                                         tint = ActionCompleteContent
                                     )
@@ -131,7 +129,7 @@ fun ArchiveItem(
                                     )
                                 } else {
                                     Icon(
-                                        imageVector = Icons.Filled.DoneAll,
+                                        imageVector = Icons.Outlined.Restore,
                                         contentDescription = null,
                                         tint = ActionCompleteContent
                                     )
@@ -171,12 +169,6 @@ fun ArchiveItem(
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = if (todo.isImportant) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                    contentDescription = null,
-                    tint = if (todo.isImportant) Primary else TextSecondary,
-                    modifier = Modifier.padding(end = 16.dp)
-                )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = todo.title,

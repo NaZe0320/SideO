@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -165,12 +164,6 @@ fun TrashItem(
                     .padding(20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Outlined.PushPin,
-                    contentDescription = null,
-                    tint = TextSecondary,
-                    modifier = Modifier.padding(end = 16.dp)
-                )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = todo.title,
@@ -184,6 +177,12 @@ fun TrashItem(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = null,
+                    tint = ActionDelete,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
         }
     }

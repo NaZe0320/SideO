@@ -2,7 +2,6 @@ package com.naze.side_o.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -43,7 +41,6 @@ import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
 import com.naze.side_o.ui.theme.ActionDeleteContent
-import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -301,17 +298,10 @@ fun HomeTodoItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = if (todo.isImportant) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                    contentDescription = if (todo.isImportant) "핀 해제" else "핀",
-                    tint = if (todo.isImportant) Primary else TextSecondary,
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .clickable {
-                            viewModel.setImportant(todo.id, !todo.isImportant)
-                            if (!todo.isImportant && index > 0) {
-                                viewModel.reorder(allItems, index, 0)
-                            }
-                        }
+                    imageVector = Icons.Filled.DragIndicator,
+                    contentDescription = "이동 가능",
+                    tint = TextSecondary,
+                    modifier = Modifier.padding(end = 16.dp)
                 )
                 Text(
                     text = todo.title,
