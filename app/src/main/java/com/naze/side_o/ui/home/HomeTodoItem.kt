@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.ui.components.SwipeDirection
-import com.naze.side_o.ui.components.SwipeToDismissByPositionBox
+import com.naze.side_o.ui.components.SwipeToDismissBox
 import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
@@ -127,7 +127,7 @@ fun HomeTodoItem(
     }
 
     val cardShape = RoundedCornerShape(24.dp)
-    SwipeToDismissByPositionBox(
+    SwipeToDismissBox(
         modifier = Modifier.fillMaxWidth(),
         thresholdFraction = 0.5f,
         backgroundContent = { direction ->
@@ -243,7 +243,6 @@ fun HomeTodoItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
                 .combinedClickable(
                     onClick = {
                         editTitle = todo.title

@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.ui.archive.daysAgoFrom
 import com.naze.side_o.ui.components.SwipeDirection
-import com.naze.side_o.ui.components.SwipeToDismissByPositionBox
+import com.naze.side_o.ui.components.SwipeToDismissBox
 import com.naze.side_o.ui.theme.ActionComplete
 import com.naze.side_o.ui.theme.ActionCompleteContent
 import com.naze.side_o.ui.theme.ActionDelete
@@ -49,7 +49,7 @@ fun TrashItem(
     }
 
     val cardShape = RoundedCornerShape(24.dp)
-    SwipeToDismissByPositionBox(
+    SwipeToDismissBox(
         modifier = modifier.fillMaxWidth(),
         thresholdFraction = 0.5f,
         backgroundContent = { direction ->
@@ -154,8 +154,7 @@ fun TrashItem(
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .fillMaxWidth(),
             shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
