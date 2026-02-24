@@ -86,12 +86,12 @@ fun ArchiveScreen(
                         Tab(
                             selected = selectedTabIndex == 0,
                             onClick = { selectedTabIndex = 0 },
-                            text = { Text("Archive") }
+                            text = { Text("완료한 일") }
                         )
                         Tab(
                             selected = selectedTabIndex == 1,
                             onClick = { selectedTabIndex = 1 },
-                            text = { Text("Trash") }
+                            text = { Text("삭제한 일") }
                         )
                     }
                 }
@@ -112,7 +112,7 @@ fun ArchiveScreen(
                     if (filteredItems.isEmpty()) return@forEach
                     item(key = "header_${section.title}") {
                         Text(
-                            text = section.title.uppercase(),
+                            text = section.title,
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
@@ -148,10 +148,10 @@ fun ArchiveScreen(
             ) {
                 item(key = "deleted_header") {
                     Text(
-                        text = "RECENTLY DELETED",
+                        text = "최근 삭제",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                     )
                 }
                 items(

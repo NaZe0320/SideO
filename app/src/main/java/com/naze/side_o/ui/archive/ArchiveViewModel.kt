@@ -61,10 +61,10 @@ class ArchiveViewModel(
             }
             buildList {
                 if (recently.isNotEmpty()) {
-                    add(ArchiveSection("RECENTLY COMPLETED", recently))
+                    add(ArchiveSection("최근 완료", recently))
                 }
                 if (lastWeek.isNotEmpty()) {
-                    add(ArchiveSection("LAST WEEK", lastWeek))
+                    add(ArchiveSection("지난 주", lastWeek))
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.naze.side_o.ui.home
 
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -192,19 +193,16 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(MaterialTheme.colorScheme.surface),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     androidx.compose.material3.OutlinedTextField(
                         value = newTitle,
                         onValueChange = { newTitle = it },
-                        modifier = Modifier
-                            .weight(1f)
-                            .background(
-                                MaterialTheme.colorScheme.surface,
-                                RoundedCornerShape(32.dp)
-                            ),
+                        modifier = Modifier.weight(1f),
                         placeholder = {
                             Text(
                                 "What's your next task?",
