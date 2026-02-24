@@ -205,7 +205,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         placeholder = {
                             Text(
-                                "What's your next task?",
+                                "다음 할 일은?",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = TextSecondary
                             )
