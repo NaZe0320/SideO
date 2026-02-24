@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.naze.side_o.ui.components.AppTopBarHome
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,12 +67,16 @@ fun HomeScreen(
 
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
+    var pendingItems by remember { mutableStateOf<List<TodoEntity>?>(null) }
     val density = LocalDensity.current
     val itemHeightPx = with(density) { (72.dp + 8.dp).toPx() }
     val dropTargetIndex: Int? = draggedIndex?.let { d ->
         val raw = (d + (dragOffsetY / itemHeightPx).roundToInt())
             .coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
         if (raw == d) null else raw
+    }
+    LaunchedEffect(activeTodos) {
+        pendingItems = null
     }
     val visualItems: List<TodoEntity> = remember(activeTodos, draggedIndex, dropTargetIndex) {
         val d = draggedIndex
@@ -82,6 +87,7 @@ fun HomeScreen(
             activeTodos
         }
     }
+    val displayItems: List<TodoEntity> = pendingItems ?: visualItems
 
     fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
         scope.launch {
@@ -138,7 +144,7 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     content = {
                         itemsIndexed(
-                            items = visualItems,
+                            items = displayItems,
                             key = { _, it -> it.id }
                         ) { index, todo ->
                             val isDragging = todo.id == activeTodos.getOrNull(draggedIndex ?: -1)?.id
@@ -157,6 +163,8 @@ fun HomeScreen(
                                     val from = draggedIndex
                                     val to = dropTargetIndex
                                     if (from != null && to != null && from != to) {
+                                        pendingItems = activeTodos.toMutableList()
+                                            .apply { add(to, removeAt(from)) }
                                         viewModel.reorder(activeTodos, from, to)
                                     }
                                     draggedIndex = null

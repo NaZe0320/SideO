@@ -52,7 +52,7 @@
     `activeTodos.toMutableList().apply { add(t, removeAt(d)) }` 로 재배치.
   - 그 외에는 `activeTodos` 그대로.
 - **LazyColumn items**
-  - `items` → **visualItems** 사용.
+  - `items` → **displayItems** 사용 (pendingItems ?: visualItems).
   - **isDragging**: `activeTodos` 기준 id 비교  
     `todo.id == activeTodos.getOrNull(draggedIndex ?: -1)?.id`.
   - **onDragStart**: `draggedIndex = activeTodos.indexOfFirst { it.id == todo.id }`, `dragOffsetY = 0f`.
@@ -64,6 +64,14 @@
 - **animateItem**
   - 비드래그 아이템에만 `Modifier.animateItem()` 적용 후  
     `HomeTodoItem(modifier = if (!isDragging) Modifier.animateItem() else Modifier, ...)` 로 전달.
+- **pendingItems 브릿징 (드롭 후 튕김 방지)**
+  - **원인**: `draggedIndex = null` 리셋이 DB 업데이트 완료보다 먼저 일어나면, `visualItems`가 곧바로 `activeTodos` 기준으로 돌아가서 “원래 자리 → 다시 새 자리”로 튕기는 현상 발생.
+  - **해결**: drop 직후 DB 반영 전까지 재배치된 순서를 유지하는 **pendingItems** 상태 추가.
+  - `pendingItems: List<TodoEntity>?` — drop 시 `from`/`to`로 재배치한 리스트를 저장.
+  - `LaunchedEffect(activeTodos)` — `activeTodos`가 갱신되면 `pendingItems = null`로 해제.
+  - **displayItems** = `pendingItems ?: visualItems` 로, 우선 pending이 있으면 그대로 표시.
+  - **onDragEnd**: `from != to`일 때 먼저 `pendingItems = activeTodos.toMutableList().apply { add(to, removeAt(from)) }` 설정 후 `viewModel.reorder(...)` 호출.
+  - LazyColumn **items** → **displayItems** 사용.
 
 ### 4.2 HomeTodoItem.kt
 
@@ -84,20 +92,38 @@
 
 ---
 
-## 5. 변경 요약표
+## 5. 드롭 후 튕김 현상 — pendingItems 브릿징
+
+### 5.1 원인
+
+- **draggedIndex = null** 리셋과 **DB 업데이트 완료** 시점이 다름.
+- 시퀀스: (1) 드래그 중 visualItems = [B, A, C] → (2) onDragEnd에서 reorder 비동기 시작 + **즉시** draggedIndex = null → visualItems가 activeTodos 기준으로 복귀 → A가 index=0으로 애니메이션 → (3) DB 반영 후 activeTodos = [B, A, C] → A가 다시 index=1로 이동.
+- 결과: A가 위로 올라갔다가 다시 아래로 내려오는 **튕김**.
+
+### 5.2 해결: pendingItems
+
+- drop 직후 **DB 반영 전까지** 재배치된 순서를 **pendingItems**에 고정.
+- **displayItems** = `pendingItems ?: visualItems` → pending이 있으면 그 순서 유지.
+- **LaunchedEffect(activeTodos)** 로 activeTodos가 바뀌면 pendingItems 해제.
+- 수정 후: onDragEnd에서 pendingItems = [B, A, C] 설정 → draggedIndex = null 해도 displayItems = pendingItems 유지 → DB 반영 후 activeTodos = [B, A, C], pendingItems = null → displayItems = activeTodos로 동일 순서 → **튕김 없음**.
+
+---
+
+## 6. 변경 요약표
 
 | 변경 항목 | 이전 | 이후 | 효과 |
 |-----------|------|------|------|
-| LazyColumn 데이터 | activeTodos | visualItems | 연쇄 밀림 제거 |
+| LazyColumn 데이터 | activeTodos | displayItems (pendingItems ?: visualItems) | 연쇄 밀림 + 드롭 튕김 제거 |
 | 드래그 시각 | translationY | 재배치 위치에 렌더 | 자연스러운 UX |
 | topGapDp | 32dp 갭 추가 | 제거 | 연쇄 밀림 제거 |
 | pointerInput 콜백 | 고정 캡처 | rememberUpdatedState | 값 누적/stale 방지 |
 | onDragEnd | return@ 포함 | null 체크 후 리셋 | 리셋 보장 |
 | 비드래그 아이템 | — | Modifier.animateItem() | 위치 이동 애니메이션 |
+| 드롭 후 표시 | visualItems → activeTodos 즉시 전환 | pendingItems로 DB 반영 전 고정 | 드롭 튕김 제거 |
 
 ---
 
-## 6. 관련 경로
+## 7. 관련 경로
 
 - `app/src/main/java/com/naze/side_o/ui/home/HomeScreen.kt`
 - `app/src/main/java/com/naze/side_o/ui/home/HomeTodoItem.kt`
