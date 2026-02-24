@@ -30,7 +30,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.naze.side_o.ACTION_TOGGLE_TODO" />
+                <action android:name="com.naze.do_swipe.ACTION_TOGGLE_TODO" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -42,7 +42,7 @@
             android:label="@string/widget_label_small">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.naze.side_o.ACTION_TOGGLE_TODO" />
+                <action android:name="com.naze.do_swipe.ACTION_TOGGLE_TODO" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -54,7 +54,7 @@
             android:label="@string/widget_label_medium">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.naze.side_o.ACTION_TOGGLE_TODO" />
+                <action android:name="com.naze.do_swipe.ACTION_TOGGLE_TODO" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

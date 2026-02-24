@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.naze.side_o"
+    namespace = "com.naze.do_swipe"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.naze.side_o"
+        applicationId = "com.naze.do_swipe"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
