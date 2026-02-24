@@ -111,7 +111,7 @@ fun HomeScreen(
         },
         topBar = {
             AppTopBarHome(
-                title = "My Tasks",
+                title = "Do! Swipe",
                 onArchiveClick = onNavigateToArchive,
                 onSettingsClick = onNavigateToSettings
             )

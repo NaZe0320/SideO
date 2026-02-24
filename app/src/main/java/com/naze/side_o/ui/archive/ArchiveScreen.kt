@@ -1,6 +1,7 @@
 package com.naze.side_o.ui.archive
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -98,35 +100,95 @@ fun ArchiveScreen(
             )
         }
     ) { contentPadding ->
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 24.dp)
         if (selectedTabIndex == 0) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                sections.forEach { section ->
-                    val filteredItems = section.items.filter { it.id !in pendingDeleteIds }
-                    if (filteredItems.isEmpty()) return@forEach
-                    item(key = "header_${section.title}") {
+            val visibleSections = sections.map { s ->
+                s to s.items.filter { it.id !in pendingDeleteIds }
+            }.filter { (_, items) -> items.isNotEmpty() }
+            if (visibleSections.isEmpty()) {
+                Box(
+                    modifier = contentModifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "완료된 할 일이 없습니다",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = contentModifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    visibleSections.forEach { (section, filteredItems) ->
+                        item(key = "header_${section.title}") {
+                            Text(
+                                text = section.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                            )
+                        }
+                        items(
+                            items = filteredItems,
+                            key = { it.id }
+                        ) { todo ->
+                            ArchiveItem(
+                                todo = todo,
+                                onRestore = {
+                                    viewModel.uncomplete(todo.id)
+                                    showSnackbarWithUndo("복원됨") { viewModel.recomplete(todo.id) }
+                                },
+                                onDeletePermanent = {
+                                    viewModel.schedulePermanentDelete(todo.id)
+                                    showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(todo.id) }
+                                },
+                                swipeReversed = swipeReversed
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            val visibleDeleted = deletedTodos.filter { it.id !in pendingDeleteIds }
+            if (visibleDeleted.isEmpty()) {
+                Box(
+                    modifier = contentModifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "삭제된 할 일이 없습니다",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = contentModifier,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item(key = "deleted_header") {
                         Text(
-                            text = section.title,
+                            text = "최근 삭제",
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,
                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                         )
                     }
                     items(
-                        items = filteredItems,
+                        items = visibleDeleted,
                         key = { it.id }
                     ) { todo ->
-                        ArchiveItem(
+                        TrashItem(
                             todo = todo,
                             onRestore = {
-                                viewModel.uncomplete(todo.id)
-                                showSnackbarWithUndo("복원됨") { viewModel.recomplete(todo.id) }
+                                viewModel.restore(todo.id)
+                                showSnackbarWithUndo("복원됨") { viewModel.markDeletedAgain(todo.id) }
                             },
                             onDeletePermanent = {
                                 viewModel.schedulePermanentDelete(todo.id)
@@ -135,41 +197,6 @@ fun ArchiveScreen(
                             swipeReversed = swipeReversed
                         )
                     }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item(key = "deleted_header") {
-                    Text(
-                        text = "최근 삭제",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
-                }
-                items(
-                    items = deletedTodos.filter { it.id !in pendingDeleteIds },
-                    key = { it.id }
-                ) { todo ->
-                    TrashItem(
-                        todo = todo,
-                        onRestore = {
-                            viewModel.restore(todo.id)
-                            showSnackbarWithUndo("복원됨") { viewModel.markDeletedAgain(todo.id) }
-                        },
-                        onDeletePermanent = {
-                            viewModel.schedulePermanentDelete(todo.id)
-                            showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(todo.id) }
-                        },
-                        swipeReversed = swipeReversed
-                    )
                 }
             }
         }
