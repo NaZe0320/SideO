@@ -3,7 +3,7 @@ package com.naze.side_o.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,8 +30,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
@@ -41,7 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.ui.components.SwipeDirection
@@ -55,17 +54,15 @@ import com.naze.side_o.ui.theme.TextSecondary
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeTodoItem(
+    modifier: Modifier = Modifier,
     todo: TodoEntity,
     index: Int,
     isDragging: Boolean,
     isDimmed: Boolean,
-    dragOffsetYPx: Float = 0f,
     onDragStart: () -> Unit,
     onDragMove: (deltaY: Float) -> Unit,
     onDragEnd: () -> Unit,
-    topGapDp: Dp,
     viewModel: HomeViewModel,
-    allItems: List<TodoEntity>,
     swipeReversed: Boolean = false,
     onAfterComplete: ((Long) -> Unit)? = null,
     onAfterDelete: ((Long) -> Unit)? = null
@@ -129,14 +126,15 @@ fun HomeTodoItem(
     }
 
     val cardShape = RoundedCornerShape(24.dp)
-    val animatedGapDp by animateDpAsState(topGapDp, animationSpec = tween(200))
     val scale by animateFloatAsState(if (isDragging) 1.05f else 1f, animationSpec = tween(200))
     val alpha by animateFloatAsState(if (isDimmed) 0.6f else 1f, animationSpec = tween(150))
+    val currentOnDragStart by rememberUpdatedState(onDragStart)
+    val currentOnDragMove by rememberUpdatedState(onDragMove)
+    val currentOnDragEnd by rememberUpdatedState(onDragEnd)
     SwipeToDismissBox(
-        modifier = Modifier
+        modifier = modifier
             .zIndex(if (isDragging) 1f else 0f)
-            .fillMaxWidth()
-            .padding(top = animatedGapDp),
+            .fillMaxWidth(),
         clipToBounds = !isDragging,
         thresholdFraction = 0.5f,
         backgroundContent = { direction ->
@@ -257,8 +255,7 @@ fun HomeTodoItem(
                 .graphicsLayer(
                     scaleX = scale,
                     scaleY = scale,
-                    alpha = alpha,
-                    translationY = if (isDragging) dragOffsetYPx else 0f
+                    alpha = alpha
                 )
                 .combinedClickable(
                     onClick = {
@@ -283,11 +280,11 @@ fun HomeTodoItem(
                     modifier = Modifier
                         .padding(end = 16.dp)
                         .pointerInput(Unit) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { onDragStart() },
-                                onDrag = { _, delta -> onDragMove(delta.y) },
-                                onDragEnd = onDragEnd,
-                                onDragCancel = onDragEnd
+                            detectDragGestures(
+                                onDragStart = { currentOnDragStart() },
+                                onDrag = { _, delta -> currentOnDragMove(delta.y) },
+                                onDragEnd = { currentOnDragEnd() },
+                                onDragCancel = { currentOnDragEnd() }
                             )
                         }
                 )

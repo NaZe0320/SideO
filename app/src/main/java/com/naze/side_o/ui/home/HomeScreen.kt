@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -42,9 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naze.side_o.TodoApplication
+import com.naze.side_o.data.local.TodoEntity
 import com.naze.side_o.ui.theme.Primary
 import com.naze.side_o.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
@@ -68,10 +67,20 @@ fun HomeScreen(
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var dragOffsetY by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
-    val itemHeightPx = with(density) { 72.dp.toPx() }
-    val dropTargetIndex: Int? = when (val d = draggedIndex) {
-        null -> null
-        else -> (d + (dragOffsetY / itemHeightPx).roundToInt()).coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
+    val itemHeightPx = with(density) { (72.dp + 8.dp).toPx() }
+    val dropTargetIndex: Int? = draggedIndex?.let { d ->
+        val raw = (d + (dragOffsetY / itemHeightPx).roundToInt())
+            .coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
+        if (raw == d) null else raw
+    }
+    val visualItems: List<TodoEntity> = remember(activeTodos, draggedIndex, dropTargetIndex) {
+        val d = draggedIndex
+        val t = dropTargetIndex
+        if (d != null && t != null) {
+            activeTodos.toMutableList().apply { add(t, removeAt(d)) }
+        } else {
+            activeTodos
+        }
     }
 
     fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
@@ -129,34 +138,31 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     content = {
                         itemsIndexed(
-                            items = activeTodos,
+                            items = visualItems,
                             key = { _, it -> it.id }
                         ) { index, todo ->
-                            val topGapDp: Dp = if (index == dropTargetIndex) 32.dp else 0.dp
+                            val isDragging = todo.id == activeTodos.getOrNull(draggedIndex ?: -1)?.id
                             HomeTodoItem(
+                                modifier = if (!isDragging) Modifier.animateItem() else Modifier,
                                 todo = todo,
                                 index = index,
-                                isDragging = draggedIndex == index,
-                                isDimmed = draggedIndex != null && draggedIndex != index,
-                                dragOffsetYPx = if (draggedIndex == index) dragOffsetY else 0f,
+                                isDragging = isDragging,
+                                isDimmed = draggedIndex != null && !isDragging,
                                 onDragStart = {
-                                    draggedIndex = index
+                                    draggedIndex = activeTodos.indexOfFirst { it.id == todo.id }
                                     dragOffsetY = 0f
                                 },
-                                onDragMove = { deltaY: Float -> dragOffsetY += deltaY },
+                                onDragMove = { deltaY -> dragOffsetY += deltaY },
                                 onDragEnd = {
-                                    val from = draggedIndex ?: return@HomeTodoItem
-                                    val to = (from + (dragOffsetY / itemHeightPx).roundToInt())
-                                        .coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
-                                    if (from != to) {
+                                    val from = draggedIndex
+                                    val to = dropTargetIndex
+                                    if (from != null && to != null && from != to) {
                                         viewModel.reorder(activeTodos, from, to)
                                     }
                                     draggedIndex = null
                                     dragOffsetY = 0f
                                 },
-                                topGapDp = topGapDp,
                                 viewModel = viewModel,
-                                allItems = activeTodos,
                                 swipeReversed = swipeReversedFromPrefs,
                                 onAfterComplete = { id ->
                                     showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
