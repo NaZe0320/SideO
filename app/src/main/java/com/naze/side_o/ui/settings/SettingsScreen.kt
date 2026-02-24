@@ -21,10 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
@@ -88,7 +84,7 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             AppTopBarSub(
-                title = "Settings",
+                title = "설정",
                 onBackClick = onNavigateBack
             )
         }
@@ -101,49 +97,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
         ) {
-            SectionLabel(text = "Preferences")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column {
-                    SettingsRowItem(
-                        icon = Icons.Outlined.Palette,
-                        iconTint = Primary,
-                        title = "테마 색상",
-                        subtitle = "Soft Lavender",
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                tint = TextSecondary
-                            )
-                        },
-                        onClick = { showThemeDialog = true }
-                    )
-                    HorizontalDivider()
-                    SettingsRowItem(
-                        icon = Icons.Outlined.PushPin,
-                        iconTint = ActionComplete,
-                        title = "핀 기본",
-                        subtitle = "Always visible",
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                tint = TextSecondary
-                            )
-                        },
-                        onClick = { }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            SectionLabel(text = "Gesture Settings")
+            SectionLabel(text = "제스처 설정")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -152,7 +106,7 @@ fun SettingsScreen(
             ) {
                 SettingsSwitchItem(
                     icon = Icons.Outlined.SwapHoriz,
-                    iconTint = ActionDelete,
+                    iconTint = Primary,
                     title = "스와이프 방향 반전",
                     subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
                     checked = swipeReversed,
@@ -162,46 +116,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SectionLabel(text = "Data & Privacy")
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column {
-                    SettingsRowItem(
-                        icon = Icons.Outlined.CloudSync,
-                        title = "iCloud Sync",
-                        subtitle = "준비 중",
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                tint = TextSecondary
-                            )
-                        },
-                        onClick = { }
-                    )
-                    HorizontalDivider()
-                    SettingsRowItem(
-                        icon = Icons.Outlined.Lock,
-                        title = "Passcode Lock",
-                        subtitle = "준비 중",
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Outlined.ChevronRight,
-                                contentDescription = null,
-                                tint = TextSecondary
-                            )
-                        },
-                        onClick = { }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
+            SectionLabel(text = "알림")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -210,6 +125,7 @@ fun SettingsScreen(
             ) {
                 SettingsSwitchItem(
                     icon = Icons.Outlined.Notifications,
+                    iconTint = Primary,
                     title = "알림",
                     subtitle = "할 일 알림",
                     checked = remindersEnabled,
@@ -228,6 +144,7 @@ fun SettingsScreen(
             ) {
                 SettingsRowItem(
                     icon = Icons.Outlined.DarkMode,
+                    iconTint = Primary,
                     title = "테마",
                     subtitle = when (themeMode) {
                         ThemeMode.SYSTEM -> "시스템 설정 따름"
@@ -406,7 +323,15 @@ private fun ThemeSelectDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("테마 선택") },
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = {
+            Text(
+                "테마 선택",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ThemeMode.entries.forEach { mode ->
@@ -423,7 +348,7 @@ private fun ThemeSelectDialog(
                                 ThemeMode.LIGHT -> "라이트"
                                 ThemeMode.DARK -> "다크"
                             },
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = if (mode == currentMode) {
                                 MaterialTheme.colorScheme.primary
                             } else {
