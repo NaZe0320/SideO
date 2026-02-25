@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.naze.do_swipe.navigation.NavGraph
-import com.naze.do_swipe.ui.theme.SideOTheme
+import com.naze.do_swipe.ui.theme.DoSwipeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
             val themeMode by app.settingsRepository.themeMode.collectAsState(
                 initial = com.naze.do_swipe.data.preferences.ThemeMode.SYSTEM
             )
-            SideOTheme(themeMode = themeMode) {
+            DoSwipeTheme(themeMode = themeMode) {
                 NavGraph()
             }
         }
