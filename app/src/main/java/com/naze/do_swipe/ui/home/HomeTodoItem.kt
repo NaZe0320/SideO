@@ -178,7 +178,7 @@ fun HomeTodoItem(
                                         tint = ActionCompleteContent
                                     )
                                     Text(
-                                        "Complete",
+                                        "완료",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = ActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
@@ -190,7 +190,7 @@ fun HomeTodoItem(
                                         tint = ActionDeleteContent
                                     )
                                     Text(
-                                        "Delete",
+                                        "삭제",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = ActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
@@ -205,7 +205,7 @@ fun HomeTodoItem(
                                         tint = ActionDeleteContent
                                     )
                                     Text(
-                                        "Delete",
+                                        "삭제",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = ActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
@@ -217,7 +217,7 @@ fun HomeTodoItem(
                                         tint = ActionCompleteContent
                                     )
                                     Text(
-                                        "Complete",
+                                        "완료",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = ActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
