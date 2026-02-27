@@ -3,7 +3,7 @@ package com.naze.do_swipe.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -258,6 +258,14 @@ fun HomeTodoItem(
                     scaleY = scale,
                     alpha = alpha
                 )
+                .pointerInput(Unit) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { currentOnDragStart() },
+                        onDrag = { _, delta -> currentOnDragMove(delta.y) },
+                        onDragEnd = { currentOnDragEnd() },
+                        onDragCancel = { currentOnDragEnd() }
+                    )
+                }
                 .combinedClickable(
                     onClick = {
                         editTitle = todo.title
@@ -280,14 +288,6 @@ fun HomeTodoItem(
                     tint = TextSecondary,
                     modifier = Modifier
                         .padding(end = 16.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = { currentOnDragStart() },
-                                onDrag = { _, delta -> currentOnDragMove(delta.y) },
-                                onDragEnd = { currentOnDragEnd() },
-                                onDragCancel = { currentOnDragEnd() }
-                            )
-                        }
                 )
                 Text(
                     text = todo.title,
