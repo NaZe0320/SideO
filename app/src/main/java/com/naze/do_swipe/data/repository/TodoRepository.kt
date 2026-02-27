@@ -4,6 +4,8 @@ import com.naze.do_swipe.data.local.TodoDao
 import com.naze.do_swipe.data.local.TodoEntity
 import kotlinx.coroutines.flow.Flow
 
+private const val MAX_TITLE_LENGTH = 60
+
 class TodoRepository(
     private val dao: TodoDao
 ) {
@@ -15,9 +17,11 @@ class TodoRepository(
     suspend fun getById(id: Long): TodoEntity? = dao.getById(id)
 
     suspend fun addTodo(title: String, isImportant: Boolean = false) {
+        val normalized = title.trim().take(MAX_TITLE_LENGTH)
+        if (normalized.isBlank()) return
         val orderIndex = dao.getNextOrderIndex()
         val entity = TodoEntity(
-            title = title,
+            title = normalized,
             isImportant = isImportant,
             createdAt = System.currentTimeMillis(),
             orderIndex = orderIndex
@@ -26,7 +30,9 @@ class TodoRepository(
     }
 
     suspend fun updateTodo(entity: TodoEntity) {
-        dao.update(entity)
+        val normalized = entity.title.trim().take(MAX_TITLE_LENGTH)
+        if (normalized.isBlank()) return
+        dao.update(entity.copy(title = normalized))
     }
 
     suspend fun setCompleted(id: Long, completed: Boolean) {
@@ -74,5 +80,9 @@ class TodoRepository(
                 dao.update(entity.copy(orderIndex = index))
             }
         }
+    }
+
+    suspend fun clearAllTodos() {
+        dao.deleteAll()
     }
 }

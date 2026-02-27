@@ -85,7 +85,11 @@ fun HomeTodoItem(
             text = {
                 OutlinedTextField(
                     value = editTitle,
-                    onValueChange = { editTitle = it },
+                    onValueChange = {
+                        if (it.length <= 60) {
+                            editTitle = it
+                        }
+                    },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()

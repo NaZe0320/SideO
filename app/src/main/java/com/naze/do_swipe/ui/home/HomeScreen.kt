@@ -201,7 +201,11 @@ fun HomeScreen(
                 ) {
                     androidx.compose.material3.OutlinedTextField(
                         value = newTitle,
-                        onValueChange = { newTitle = it },
+                        onValueChange = {
+                            if (it.length <= 60) {
+                                newTitle = it
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         placeholder = {
                             Text(

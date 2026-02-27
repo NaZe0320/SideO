@@ -1,5 +1,7 @@
 package com.naze.do_swipe.ui.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +26,13 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -47,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.ui.theme.ActionComplete
@@ -65,7 +70,9 @@ fun SettingsScreen(
     val swipeReversed by viewModel.swipeReversed.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showDataClearDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     if (showThemeDialog) {
         ThemeSelectDialog(
@@ -75,6 +82,49 @@ fun SettingsScreen(
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
+        )
+    }
+
+    if (showDataClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showDataClearDialog = false },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = "데이터 초기화",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Text(
+                    text = "모든 할 일 데이터를 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearAllData()
+                        showDataClearDialog = false
+                    }
+                ) {
+                    Text(
+                        text = "모두 삭제",
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDataClearDialog = false }) {
+                    Text(
+                        text = "취소",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         )
     }
 
@@ -162,14 +212,83 @@ fun SettingsScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            SectionLabel(text = "데이터")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsRowItem(
+                    icon = Icons.Outlined.DeleteForever,
+                    iconTint = ActionDelete,
+                    title = "데이터 초기화",
+                    subtitle = "모든 할 일 데이터를 영구 삭제",
+                    trailing = {
+                        Icon(
+                            imageVector = Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = TextSecondary
+                        )
+                    },
+                    onClick = { showDataClearDialog = true }
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp, bottom = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(PRIVACY_POLICY_URL)
+                            )
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Text(
+                            text = "개인정보처리방침",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
+                    )
+                    TextButton(
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(TERMS_OF_SERVICE_URL)
+                            )
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Text(
+                            text = "이용약관",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                val versionName = try {
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName
+                } catch (e: Exception) {
+                    null
+                } ?: ""
                 Text(
-                    text = "Version 1.0 • Made with Love",
+                    text = "Version $versionName • Made by 무제상자",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary
                 )
@@ -314,6 +433,9 @@ private fun SettingsRowItem(
         trailing()
     }
 }
+
+private const val PRIVACY_POLICY_URL = "https://do-swipe.web.app/privacy.html"
+private const val TERMS_OF_SERVICE_URL = "https://do-swipe.web.app/terms.html"
 
 @Composable
 private fun ThemeSelectDialog(
