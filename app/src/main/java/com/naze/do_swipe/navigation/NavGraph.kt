@@ -22,7 +22,8 @@ import com.naze.do_swipe.ui.settings.SettingsViewModelFactory
 
 @Composable
 fun NavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    openAddFromWidget: Boolean = false
 ) {
     NavHost(
         navController = navController,
@@ -39,7 +40,8 @@ fun NavGraph(
             HomeScreen(
                 viewModel = viewModel,
                 onNavigateToArchive = { navController.navigate(Screen.Archive.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                openAddOnStart = openAddFromWidget
             )
         }
         composable(Screen.Archive.route) {

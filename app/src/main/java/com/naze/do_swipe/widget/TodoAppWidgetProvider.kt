@@ -6,8 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.view.View
+import android.net.Uri
 import android.widget.RemoteViews
+import com.naze.do_swipe.MainActivity
 import com.naze.do_swipe.R
 import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.local.TodoEntity
@@ -19,7 +20,8 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_TOGGLE_TODO = "com.naze.do_swipe.ACTION_TOGGLE_TODO"
         const val EXTRA_TODO_ID = "extra_todo_id"
-        private const val MAX_ITEMS = 5
+        const val EXTRA_OPEN_ADD_FROM_WIDGET = "extra_open_add_from_widget"
+        private const val MAX_ITEMS = 8
 
         fun updateAllWidgets(context: Context) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -52,49 +54,50 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int,
             layoutId: Int
         ): RemoteViews {
-            val views = RemoteViews(context.packageName, layoutId)
-            val itemContainerIds = listOf(
-                R.id.widget_todo_item_0,
-                R.id.widget_todo_item_1,
-                R.id.widget_todo_item_2,
-                R.id.widget_todo_item_3,
-                R.id.widget_todo_item_4
-            )
-            val titleViewIds = listOf(
-                R.id.widget_todo_title_0,
-                R.id.widget_todo_title_1,
-                R.id.widget_todo_title_2,
-                R.id.widget_todo_title_3,
-                R.id.widget_todo_title_4
-            )
-            val checkButtonIds = listOf(
-                R.id.widget_todo_check_button_0,
-                R.id.widget_todo_check_button_1,
-                R.id.widget_todo_check_button_2,
-                R.id.widget_todo_check_button_3,
-                R.id.widget_todo_check_button_4
-            )
-            val displayTodos = todos.take(MAX_ITEMS)
-            if (displayTodos.isEmpty()) {
-                views.setViewVisibility(R.id.widget_empty_text, View.VISIBLE)
-                itemContainerIds.forEach { itemId -> views.setViewVisibility(itemId, View.GONE) }
-            } else {
-                views.setViewVisibility(R.id.widget_empty_text, View.GONE)
-                displayTodos.forEachIndexed { index, todo ->
-                    views.setViewVisibility(itemContainerIds[index], View.VISIBLE)
-                    val displayTitle = if (todo.isImportant) "⭐ ${todo.title}" else todo.title
-                    views.setTextViewText(titleViewIds[index], displayTitle)
-                    val checkButtonIntent = Intent(context, TodoAppWidgetProvider::class.java).apply {
-                        action = ACTION_TOGGLE_TODO
-                        putExtra(EXTRA_TODO_ID, todo.id)
-                    }
-                    views.setOnClickPendingIntent(
-                        checkButtonIds[index],
-                        PendingIntent.getBroadcast(context, (appWidgetId * 1000 + index), checkButtonIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                    )
-                }
-                for (i in displayTodos.size until MAX_ITEMS) views.setViewVisibility(itemContainerIds[i], View.GONE)
+            val views = RemoteViews(context.packageName, R.layout.widget_todo_list)
+
+            val serviceIntent = Intent(context, TodoWidgetService::class.java).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
+            views.setRemoteAdapter(R.id.widget_list, serviceIntent)
+            views.setEmptyView(R.id.widget_list, R.id.widget_empty_text)
+
+            val toggleIntent = Intent(context, TodoAppWidgetProvider::class.java).apply {
+                action = ACTION_TOGGLE_TODO
+            }
+            val togglePendingIntent = PendingIntent.getBroadcast(
+                context,
+                appWidgetId,
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setPendingIntentTemplate(R.id.widget_list, togglePendingIntent)
+
+            val mainIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val mainPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                mainIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_header_container, mainPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_more_container, mainPendingIntent)
+
+            val addIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_OPEN_ADD_FROM_WIDGET, true)
+            }
+            val addPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 1000,
+                addIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_add_button, addPendingIntent)
+
             return views
         }
     }

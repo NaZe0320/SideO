@@ -44,6 +44,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.theme.Primary
@@ -56,7 +59,8 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToArchive: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    openAddOnStart: Boolean = false
 ) {
     val app = LocalContext.current.applicationContext as TodoApplication
     val swipeReversedFromPrefs by app.settingsRepository.swipeReversed.collectAsState(initial = false)
@@ -70,6 +74,8 @@ fun HomeScreen(
     var dragOffsetY by remember { mutableStateOf(0f) }
     var pendingItems by remember { mutableStateOf<List<TodoEntity>?>(null) }
     val density = LocalDensity.current
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val itemHeightPx = with(density) { (72.dp + 8.dp).toPx() }
     val dropTargetIndex: Int? = draggedIndex?.let { d ->
         val raw = (d + (dragOffsetY / itemHeightPx).roundToInt())
@@ -89,6 +95,13 @@ fun HomeScreen(
         }
     }
     val displayItems: List<TodoEntity> = pendingItems ?: visualItems
+
+    LaunchedEffect(openAddOnStart) {
+        if (openAddOnStart) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
         scope.launch {
@@ -206,7 +219,9 @@ fun HomeScreen(
                                 newTitle = it
                             }
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester),
                         placeholder = {
                             Text(
                                 "다음 할 일은?",

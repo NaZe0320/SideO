@@ -59,6 +59,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/app_widget_info_medium" />
         </receiver>
+
+        <service
+            android:name=".widget.TodoWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS">
+            <intent-filter>
+                <action android:name="android.widget.RemoteViewsService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
