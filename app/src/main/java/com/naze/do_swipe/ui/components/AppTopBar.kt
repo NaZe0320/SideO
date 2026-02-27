@@ -20,11 +20,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 private val AppTopBarPadding = 16.dp
+
+/** 뒤로가기 버튼 연속 클릭 무시 시간 (전환 애니메이션 중 중복 pop 방지) */
+private const val BackClickDebounceMs = 400L
 
 /**
  * 공통 AppBar 홈형: 좌 아카이브 / 중앙 제목 / 우 설정.
@@ -82,6 +91,13 @@ fun AppTopBarSub(
     modifier: Modifier = Modifier,
     bottomContent: @Composable (() -> Unit)? = null
 ) {
+    var backClickEnabled by remember { mutableStateOf(true) }
+    LaunchedEffect(backClickEnabled) {
+        if (!backClickEnabled) {
+            delay(BackClickDebounceMs)
+            backClickEnabled = true
+        }
+    }
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.windowInsetsPadding(WindowInsets.statusBars)
@@ -93,7 +109,13 @@ fun AppTopBarSub(
                     .padding(horizontal = AppTopBarPadding, vertical = AppTopBarPadding),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBackClick) {
+                IconButton(
+                    onClick = {
+                        if (!backClickEnabled) return@IconButton
+                        backClickEnabled = false
+                        onBackClick()
+                    }
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "뒤로",
