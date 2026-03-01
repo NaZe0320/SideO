@@ -7,6 +7,7 @@ import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.preferences.SettingsRepository
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.data.repository.TodoRepository
+import com.naze.do_swipe.widget.TodoAppWidgetProvider
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -41,6 +42,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun clearAllData() {
         viewModelScope.launch {
             repository.clearAllTodos()
+            TodoAppWidgetProvider.updateAllWidgets(getApplication())
         }
     }
 }
