@@ -43,9 +43,17 @@ class TodoWidgetFactory(
         items = emptyList()
     }
 
-    override fun getCount(): Int = items.size
+    override fun getCount(): Int = items.size + 1
 
     override fun getViewAt(position: Int): RemoteViews? {
+        if (position == items.size) {
+            val views = RemoteViews(context.packageName, R.layout.widget_todo_list_item_more)
+            val fillInIntent = Intent().apply {
+                putExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, -1L)
+            }
+            views.setOnClickFillInIntent(R.id.widget_item_root, fillInIntent)
+            return views
+        }
         if (position !in items.indices) {
             return null
         }
@@ -56,20 +64,25 @@ class TodoWidgetFactory(
         val displayTitle = if (todo.isImportant) "⭐ ${todo.title}" else todo.title
         views.setTextViewText(R.id.widget_item_title, displayTitle)
 
-        val fillInIntent = Intent().apply {
+        val emptyIntent = Intent().apply {
+            putExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, TodoAppWidgetProvider.EXTRA_TODO_ID_IGNORE)
+        }
+        views.setOnClickFillInIntent(R.id.widget_item_root, emptyIntent)
+
+        val checkIntent = Intent().apply {
             putExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, todo.id)
         }
-        views.setOnClickFillInIntent(R.id.widget_item_root, fillInIntent)
+        views.setOnClickFillInIntent(R.id.widget_item_check_icon, checkIntent)
 
         return views
     }
 
     override fun getLoadingView(): RemoteViews? = null
 
-    override fun getViewTypeCount(): Int = 1
+    override fun getViewTypeCount(): Int = 2
 
     override fun getItemId(position: Int): Long =
-        items.getOrNull(position)?.id ?: position.toLong()
+        if (position == items.size) -1L else (items.getOrNull(position)?.id ?: position.toLong())
 
     override fun hasStableIds(): Boolean = true
 }

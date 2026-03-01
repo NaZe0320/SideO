@@ -5,13 +5,15 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:clickable="false"
+    android:focusable="false">
 
     <ImageView
         android:id="@+id/widget_item_check_icon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:src="@android:drawable/checkbox_off_background"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/widget_checkbox_off"
         android:contentDescription="@string/widget_check_todo" />
 
     <TextView

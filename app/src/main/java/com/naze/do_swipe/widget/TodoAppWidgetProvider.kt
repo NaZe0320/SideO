@@ -20,6 +20,7 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_TOGGLE_TODO = "com.naze.do_swipe.ACTION_TOGGLE_TODO"
         const val EXTRA_TODO_ID = "extra_todo_id"
+        internal const val EXTRA_TODO_ID_IGNORE = -2L
         const val EXTRA_OPEN_ADD_FROM_WIDGET = "extra_open_add_from_widget"
         private const val MAX_ITEMS = 8
 
@@ -28,23 +29,27 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
             val idsDefault = appWidgetManager.getAppWidgetIds(ComponentName(context, TodoAppWidgetProvider::class.java))
             val idsSmall = appWidgetManager.getAppWidgetIds(ComponentName(context, TodoAppWidgetProviderSmall::class.java))
             val idsMedium = appWidgetManager.getAppWidgetIds(ComponentName(context, TodoAppWidgetProviderMedium::class.java))
+
             if (idsDefault.isNotEmpty()) {
                 context.sendBroadcast(Intent(context, TodoAppWidgetProvider::class.java).apply {
                     action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, idsDefault)
                 })
+                appWidgetManager.notifyAppWidgetViewDataChanged(idsDefault, R.id.widget_list)
             }
             if (idsSmall.isNotEmpty()) {
                 context.sendBroadcast(Intent(context, TodoAppWidgetProviderSmall::class.java).apply {
                     action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, idsSmall)
                 })
+                appWidgetManager.notifyAppWidgetViewDataChanged(idsSmall, R.id.widget_list)
             }
             if (idsMedium.isNotEmpty()) {
                 context.sendBroadcast(Intent(context, TodoAppWidgetProviderMedium::class.java).apply {
                     action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, idsMedium)
                 })
+                appWidgetManager.notifyAppWidgetViewDataChanged(idsMedium, R.id.widget_list)
             }
         }
 
@@ -70,7 +75,7 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
                 context,
                 appWidgetId,
                 toggleIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
             views.setPendingIntentTemplate(R.id.widget_list, togglePendingIntent)
 
@@ -125,14 +130,19 @@ class TodoAppWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION_TOGGLE_TODO) {
             val todoId = intent.getLongExtra(EXTRA_TODO_ID, -1L)
-            if (todoId != -1L) {
-                val application = context.applicationContext as TodoApplication
-                application.applicationScope.launch {
-                    try {
-                        application.repository.setCompleted(todoId, true)
-                        updateAllWidgets(context)
-                    } catch (e: Exception) { }
-                }
+            if (todoId == EXTRA_TODO_ID_IGNORE) return
+            if (todoId == -1L) {
+                context.startActivity(Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                })
+                return
+            }
+            val application = context.applicationContext as TodoApplication
+            application.applicationScope.launch {
+                try {
+                    application.repository.setCompleted(todoId, true)
+                    updateAllWidgets(context)
+                } catch (e: Exception) { }
             }
         } else {
             super.onReceive(context, intent)
@@ -155,6 +165,13 @@ class TodoAppWidgetProviderSmall : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == TodoAppWidgetProvider.ACTION_TOGGLE_TODO) {
             val todoId = intent.getLongExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, -1L)
+            if (todoId == TodoAppWidgetProvider.EXTRA_TODO_ID_IGNORE) return
+            if (todoId == -1L) {
+                context.startActivity(Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                })
+                return
+            }
             if (todoId != -1L) {
                 val application = context.applicationContext as TodoApplication
                 application.applicationScope.launch {
@@ -183,6 +200,13 @@ class TodoAppWidgetProviderMedium : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == TodoAppWidgetProvider.ACTION_TOGGLE_TODO) {
             val todoId = intent.getLongExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, -1L)
+            if (todoId == TodoAppWidgetProvider.EXTRA_TODO_ID_IGNORE) return
+            if (todoId == -1L) {
+                context.startActivity(Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                })
+                return
+            }
             if (todoId != -1L) {
                 val application = context.applicationContext as TodoApplication
                 application.applicationScope.launch {
