@@ -61,8 +61,7 @@ class TodoWidgetFactory(
         val todo = items[position]
         val views = RemoteViews(context.packageName, R.layout.widget_todo_list_item)
 
-        val displayTitle = if (todo.isImportant) "⭐ ${todo.title}" else todo.title
-        views.setTextViewText(R.id.widget_item_title, displayTitle)
+        views.setTextViewText(R.id.widget_item_title, todo.title)
 
         val emptyIntent = Intent().apply {
             putExtra(TodoAppWidgetProvider.EXTRA_TODO_ID, TodoAppWidgetProvider.EXTRA_TODO_ID_IGNORE)
