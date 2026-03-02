@@ -12,6 +12,8 @@ class TodoRepository(
 
     fun getActiveTodos(): Flow<List<TodoEntity>> = dao.getActiveTodos()
 
+    suspend fun getActiveTodosOnce(): List<TodoEntity> = dao.getActiveTodosOnce()
+
     fun getCompletedTodos(): Flow<List<TodoEntity>> = dao.getCompletedTodos()
 
     suspend fun getById(id: Long): TodoEntity? = dao.getById(id)

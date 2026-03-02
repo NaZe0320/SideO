@@ -16,6 +16,11 @@ interface TodoDao {
     fun getActiveTodos(): Flow<List<TodoEntity>>
 
     @Query(
+        "SELECT * FROM todos WHERE isCompleted = 0 AND isDeleted = 0 ORDER BY orderIndex ASC, createdAt ASC"
+    )
+    suspend fun getActiveTodosOnce(): List<TodoEntity>
+
+    @Query(
         "SELECT * FROM todos WHERE isCompleted = 1 AND isDeleted = 0 ORDER BY COALESCE(completedAt, createdAt) DESC LIMIT 30"
     )
     fun getCompletedTodos(): Flow<List<TodoEntity>>

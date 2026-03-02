@@ -2,6 +2,11 @@ package com.naze.do_swipe.ui.settings
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
@@ -42,6 +48,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.ui.theme.ActionComplete
 import com.naze.do_swipe.ui.theme.ActionDelete
@@ -70,10 +81,30 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val swipeReversed by viewModel.swipeReversed.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
+    val reminderHour by viewModel.reminderHour.collectAsState()
+    val reminderMinute by viewModel.reminderMinute.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showDataClearDialog by remember { mutableStateOf(false) }
+    var showTimePickerDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) viewModel.setRemindersEnabled(true)
+    }
+
+    fun requestReminderEnable() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)) {
+                PackageManager.PERMISSION_GRANTED -> viewModel.setRemindersEnabled(true)
+                else -> notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            viewModel.setRemindersEnabled(true)
+        }
+    }
 
     if (showThemeDialog) {
         ThemeSelectDialog(
@@ -98,6 +129,18 @@ fun SettingsScreen(
                 showDataClearDialog = false
             },
             onDismiss = { showDataClearDialog = false }
+        )
+    }
+
+    if (showTimePickerDialog) {
+        ReminderTimePickerDialog(
+            initialHour = reminderHour,
+            initialMinute = reminderMinute,
+            onConfirm = { h, m ->
+                viewModel.setReminderTime(h, m)
+                showTimePickerDialog = false
+            },
+            onDismiss = { showTimePickerDialog = false }
         )
     }
 
@@ -146,14 +189,46 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                SettingsSwitchItem(
-                    icon = Icons.Outlined.Notifications,
-                    iconTint = Primary,
-                    title = "알림",
-                    subtitle = "할 일 알림",
-                    checked = remindersEnabled,
-                    onCheckedChange = { viewModel.setRemindersEnabled(it) }
-                )
+                Column {
+                    SettingsSwitchItem(
+                        icon = Icons.Outlined.Notifications,
+                        iconTint = Primary,
+                        title = "알림",
+                        subtitle = if (remindersEnabled) {
+                            String.format("매일 %02d:%02d에 미완료 할 일을 알려줘요", reminderHour, reminderMinute)
+                        } else {
+                            "알림을 끄면 미완료 할 일 알림이 오지 않아요"
+                        },
+                        checked = remindersEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) requestReminderEnable()
+                            else viewModel.setRemindersEnabled(false)
+                        }
+                    )
+                    HorizontalDivider()
+                    SettingsRowItem(
+                        icon = Icons.Outlined.Schedule,
+                        iconTint = if (remindersEnabled) Primary else TextSecondary,
+                        title = "알림 시간",
+                        subtitle = if (remindersEnabled) {
+                            String.format("매일 %02d:%02d에 알림", reminderHour, reminderMinute)
+                        } else {
+                            "알림을 켜면 시간을 설정할 수 있어요"
+                        },
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.Outlined.ChevronRight,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        },
+                        onClick = {
+                            if (remindersEnabled) {
+                                showTimePickerDialog = true
+                            }
+                        }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -409,6 +484,40 @@ private fun SettingsRowItem(
 
 private const val PRIVACY_POLICY_URL = "https://do-swipe.web.app/privacy.html"
 private const val TERMS_OF_SERVICE_URL = "https://do-swipe.web.app/terms.html"
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderTimePickerDialog(
+    initialHour: Int,
+    initialMinute: Int,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val state = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("알림 시간", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface) },
+        text = {
+            TimeInput(state = state)
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
+                Text("확인")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
+}
 
 @Composable
 private fun ThemeSelectDialog(
