@@ -21,6 +21,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import com.naze.do_swipe.ui.components.AppTopBarSub
+import com.naze.do_swipe.ui.components.ConfirmDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +50,7 @@ fun ArchiveScreen(
     val sections by viewModel.sections.collectAsState()
     val deletedTodos by viewModel.deletedTodos.collectAsState()
     val pendingDeleteIds by viewModel.pendingDeleteIds.collectAsState()
+    var pendingDeleteId by remember { mutableStateOf<Long?>(null) }
     var selectedTabIndex by remember { mutableStateOf(0) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -67,6 +69,23 @@ fun ArchiveScreen(
                 onUndo()
             }
         }
+    }
+
+    if (pendingDeleteId != null) {
+        val idToDelete = pendingDeleteId!!
+        ConfirmDialog(
+            title = "영구 삭제",
+            message = "이 항목을 영구 삭제할까요? 복구할 수 없습니다.",
+            confirmText = "영구 삭제",
+            dismissText = "취소",
+            isDestructive = true,
+            onConfirm = {
+                pendingDeleteId = null
+                viewModel.schedulePermanentDelete(idToDelete)
+                showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(idToDelete) }
+            },
+            onDismiss = { pendingDeleteId = null }
+        )
     }
 
     Scaffold(
@@ -144,10 +163,7 @@ fun ArchiveScreen(
                                     viewModel.uncomplete(todo.id)
                                     showSnackbarWithUndo("복원됨") { viewModel.recomplete(todo.id) }
                                 },
-                                onDeletePermanent = {
-                                    viewModel.schedulePermanentDelete(todo.id)
-                                    showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(todo.id) }
-                                },
+                                onRequestPermanentDelete = { pendingDeleteId = todo.id },
                                 swipeReversed = swipeReversed
                             )
                         }
@@ -190,10 +206,7 @@ fun ArchiveScreen(
                                 viewModel.restore(todo.id)
                                 showSnackbarWithUndo("복원됨") { viewModel.markDeletedAgain(todo.id) }
                             },
-                            onDeletePermanent = {
-                                viewModel.schedulePermanentDelete(todo.id)
-                                showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(todo.id) }
-                            },
+                            onRequestPermanentDelete = { pendingDeleteId = todo.id },
                             swipeReversed = swipeReversed
                         )
                     }

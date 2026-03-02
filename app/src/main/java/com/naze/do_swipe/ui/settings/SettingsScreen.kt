@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.DeleteForever
+import com.naze.do_swipe.ui.components.ConfirmDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -86,45 +87,17 @@ fun SettingsScreen(
     }
 
     if (showDataClearDialog) {
-        AlertDialog(
-            onDismissRequest = { showDataClearDialog = false },
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    text = "데이터 초기화",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+        ConfirmDialog(
+            title = "데이터 초기화",
+            message = "모든 할 일 데이터를 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
+            confirmText = "모두 삭제",
+            dismissText = "취소",
+            isDestructive = true,
+            onConfirm = {
+                viewModel.clearAllData()
+                showDataClearDialog = false
             },
-            text = {
-                Text(
-                    text = "모든 할 일 데이터를 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.clearAllData()
-                        showDataClearDialog = false
-                    }
-                ) {
-                    Text(
-                        text = "모두 삭제",
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDataClearDialog = false }) {
-                    Text(
-                        text = "취소",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
+            onDismiss = { showDataClearDialog = false }
         )
     }
 

@@ -10,6 +10,11 @@ val ActionComplete = Color(0xFFAEEBC0)   // Soft Mint Green
 val ActionCompleteContent = Color(0xFFFFFFFF)
 val ActionDelete = Color(0xFFFFB5B5)      // Soft Coral Red
 val ActionDeleteContent = Color(0xFFFFFFFF)
+// 스와이프 배경용: 덜 비활성화된 느낌 (더 선명한 톤)
+val SwipeActionComplete = Color(0xFF6BC98C)   // Richer mint green
+val SwipeActionCompleteContent = Color(0xFFFFFFFF)
+val SwipeActionDelete = Color(0xFFE57373)     // Stronger red (Material Red 300-ish)
+val SwipeActionDeleteContent = Color(0xFFFFFFFF)
 val TextPrimary = Color(0xFF2D3250)       // Dark Navy
 val TextSecondary = Color(0xFF9EA1B1)     // Muted Grey
 

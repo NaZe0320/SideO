@@ -30,11 +30,16 @@ enum class SwipeDirection {
  *
  * - 내부 Box 하나가 콘텐츠 높이만큼만 차지하고, 배경은 그 내부 Box에 matchParentSize()로 동일 크기 보장
  * - 스와이프 확정은 위치(이동 거리)만으로 판단, velocity 미사용
+ * - confirmBeforeDismiss* 가 true인 방향에서는 카드를 밀어내지 않고 offset을 0으로 복귀한 뒤 onConfirmRequested* 만 호출
  *
  * @param modifier 외부 레이아웃 Modifier
  * @param thresholdFraction 확정에 필요한 최소 이동 비율 (기본 0.5f = 50%)
- * @param onDismissStartToEnd 오른쪽 스와이프 확정 시 호출
- * @param onDismissEndToStart 왼쪽 스와이프 확정 시 호출
+ * @param confirmBeforeDismissEndToStart true면 왼쪽 스와이프 시 애니메이션 없이 리셋 후 onConfirmRequestedEndToStart만 호출
+ * @param confirmBeforeDismissStartToEnd true면 오른쪽 스와이프 시 애니메이션 없이 리셋 후 onConfirmRequestedStartToEnd만 호출
+ * @param onDismissStartToEnd 오른쪽 스와이프 확정 시 호출 (confirm 사용 시 미호출)
+ * @param onDismissEndToStart 왼쪽 스와이프 확정 시 호출 (confirm 사용 시 미호출)
+ * @param onConfirmRequestedStartToEnd confirmBeforeDismissStartToEnd일 때 오른쪽 스와이프 확정 시 호출
+ * @param onConfirmRequestedEndToStart confirmBeforeDismissEndToStart일 때 왼쪽 스와이프 확정 시 호출
  * @param backgroundContent 배경 UI. direction = null이면 중립 상태
  * @param content 앞쪽 콘텐츠 (카드 등). 이 크기가 전체 크기 기준
  */
@@ -43,8 +48,12 @@ fun SwipeToDismissBox(
     modifier: Modifier = Modifier,
     clipToBounds: Boolean = true,
     thresholdFraction: Float = 0.5f,
+    confirmBeforeDismissEndToStart: Boolean = false,
+    confirmBeforeDismissStartToEnd: Boolean = false,
     onDismissStartToEnd: () -> Unit = {},
     onDismissEndToStart: () -> Unit = {},
+    onConfirmRequestedEndToStart: (() -> Unit)? = null,
+    onConfirmRequestedStartToEnd: (() -> Unit)? = null,
     backgroundContent: @Composable (direction: SwipeDirection?) -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -105,25 +114,43 @@ fun SwipeToDismissBox(
                             val threshold = widthPx * thresholdFraction
                             scope.launch {
                                 when {
-                                    // ── 오른쪽으로 dismiss ──────────────────
+                                    // ── 오른쪽으로 dismiss (또는 confirm 요청) ─────
                                     current >= threshold -> {
-                                        animate(
-                                            initialValue = current,
-                                            targetValue = widthPx,
-                                            animationSpec = tween(300)
-                                        ) { v, _ -> offsetPx.value = v }
-                                        onDismissStartToEnd()
-                                        offsetPx.value = 0f  // ✅ 리셋
+                                        if (confirmBeforeDismissStartToEnd) {
+                                            animate(
+                                                initialValue = current,
+                                                targetValue = 0f,
+                                                animationSpec = tween(200)
+                                            ) { v, _ -> offsetPx.value = v }
+                                            onConfirmRequestedStartToEnd?.invoke()
+                                        } else {
+                                            animate(
+                                                initialValue = current,
+                                                targetValue = widthPx,
+                                                animationSpec = tween(300)
+                                            ) { v, _ -> offsetPx.value = v }
+                                            onDismissStartToEnd()
+                                            offsetPx.value = 0f
+                                        }
                                     }
-                                    // ── 왼쪽으로 dismiss ───────────────────
+                                    // ── 왼쪽으로 dismiss (또는 confirm 요청) ──────
                                     current <= -threshold -> {
-                                        animate(
-                                            initialValue = current,
-                                            targetValue = -widthPx,
-                                            animationSpec = tween(300)
-                                        ) { v, _ -> offsetPx.value = v }
-                                        onDismissEndToStart()
-                                        offsetPx.value = 0f  // ✅ 리셋
+                                        if (confirmBeforeDismissEndToStart) {
+                                            animate(
+                                                initialValue = current,
+                                                targetValue = 0f,
+                                                animationSpec = tween(200)
+                                            ) { v, _ -> offsetPx.value = v }
+                                            onConfirmRequestedEndToStart?.invoke()
+                                        } else {
+                                            animate(
+                                                initialValue = current,
+                                                targetValue = -widthPx,
+                                                animationSpec = tween(300)
+                                            ) { v, _ -> offsetPx.value = v }
+                                            onDismissEndToStart()
+                                            offsetPx.value = 0f
+                                        }
                                     }
                                     // ── 미확정: 제자리로 복귀 ──────────────
                                     else -> {

@@ -45,10 +45,10 @@ import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.components.SwipeDirection
 import com.naze.do_swipe.ui.components.SwipeToDismissBox
-import com.naze.do_swipe.ui.theme.ActionComplete
-import com.naze.do_swipe.ui.theme.ActionCompleteContent
-import com.naze.do_swipe.ui.theme.ActionDelete
-import com.naze.do_swipe.ui.theme.ActionDeleteContent
+import com.naze.do_swipe.ui.theme.SwipeActionComplete
+import com.naze.do_swipe.ui.theme.SwipeActionCompleteContent
+import com.naze.do_swipe.ui.theme.SwipeActionDelete
+import com.naze.do_swipe.ui.theme.SwipeActionDeleteContent
 import com.naze.do_swipe.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -150,9 +150,9 @@ fun HomeTodoItem(
                 colors = CardDefaults.cardColors(
                     containerColor = when (direction) {
                         SwipeDirection.EndToStart ->
-                            if (swipeReversed) ActionComplete else ActionDelete
+                            if (swipeReversed) SwipeActionComplete else SwipeActionDelete
                         SwipeDirection.StartToEnd ->
-                            if (swipeReversed) ActionDelete else ActionComplete
+                            if (swipeReversed) SwipeActionDelete else SwipeActionComplete
                         null -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 ),
@@ -179,24 +179,24 @@ fun HomeTodoItem(
                                     Icon(
                                         imageVector = Icons.Filled.CheckCircle,
                                         contentDescription = null,
-                                        tint = ActionCompleteContent
+                                        tint = SwipeActionCompleteContent
                                     )
                                     Text(
                                         "완료",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionCompleteContent,
+                                        color = SwipeActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = ActionDeleteContent
+                                        tint = SwipeActionDeleteContent
                                     )
                                     Text(
                                         "삭제",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionDeleteContent,
+                                        color = SwipeActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -206,24 +206,24 @@ fun HomeTodoItem(
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = ActionDeleteContent
+                                        tint = SwipeActionDeleteContent
                                     )
                                     Text(
                                         "삭제",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionDeleteContent,
+                                        color = SwipeActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Filled.CheckCircle,
                                         contentDescription = null,
-                                        tint = ActionCompleteContent
+                                        tint = SwipeActionCompleteContent
                                     )
                                     Text(
                                         "완료",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionCompleteContent,
+                                        color = SwipeActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }

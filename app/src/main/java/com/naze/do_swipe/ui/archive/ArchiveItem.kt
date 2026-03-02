@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.components.SwipeDirection
 import com.naze.do_swipe.ui.components.SwipeToDismissBox
-import com.naze.do_swipe.ui.theme.ActionComplete
-import com.naze.do_swipe.ui.theme.ActionCompleteContent
-import com.naze.do_swipe.ui.theme.ActionDelete
-import com.naze.do_swipe.ui.theme.ActionDeleteContent
+import com.naze.do_swipe.ui.theme.SwipeActionComplete
+import com.naze.do_swipe.ui.theme.SwipeActionCompleteContent
+import com.naze.do_swipe.ui.theme.SwipeActionDelete
+import com.naze.do_swipe.ui.theme.SwipeActionDeleteContent
 import com.naze.do_swipe.ui.theme.TextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit
 fun ArchiveItem(
     todo: TodoEntity,
     onRestore: () -> Unit,
-    onDeletePermanent: () -> Unit,
+    onRequestPermanentDelete: () -> Unit,
     swipeReversed: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -56,6 +56,16 @@ fun ArchiveItem(
     SwipeToDismissBox(
         modifier = modifier.fillMaxWidth(),
         thresholdFraction = 0.5f,
+        confirmBeforeDismissEndToStart = !swipeReversed,
+        confirmBeforeDismissStartToEnd = swipeReversed,
+        onDismissStartToEnd = {
+            if (!swipeReversed) onRestore()
+        },
+        onDismissEndToStart = {
+            if (swipeReversed) onRestore()
+        },
+        onConfirmRequestedEndToStart = if (!swipeReversed) ({ onRequestPermanentDelete() }) else null,
+        onConfirmRequestedStartToEnd = if (swipeReversed) ({ onRequestPermanentDelete() }) else null,
         backgroundContent = { direction ->
             Card(
                 modifier = Modifier.fillMaxSize(),
@@ -63,9 +73,9 @@ fun ArchiveItem(
                 colors = CardDefaults.cardColors(
                     containerColor = when (direction) {
                         SwipeDirection.EndToStart ->
-                            if (swipeReversed) ActionComplete else ActionDelete
+                            if (swipeReversed) SwipeActionComplete else SwipeActionDelete
                         SwipeDirection.StartToEnd ->
-                            if (swipeReversed) ActionDelete else ActionComplete
+                            if (swipeReversed) SwipeActionDelete else SwipeActionComplete
                         null -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 ),
@@ -92,24 +102,24 @@ fun ArchiveItem(
                                     Icon(
                                         imageVector = Icons.Outlined.Restore,
                                         contentDescription = null,
-                                        tint = ActionCompleteContent
+                                        tint = SwipeActionCompleteContent
                                     )
                                     Text(
                                         "복원",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionCompleteContent,
+                                        color = SwipeActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = ActionDeleteContent
+                                        tint = SwipeActionDeleteContent
                                     )
                                     Text(
-                                        "삭제",
+                                        "영구 삭제",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionDeleteContent,
+                                        color = SwipeActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -119,24 +129,24 @@ fun ArchiveItem(
                                     Icon(
                                         imageVector = Icons.Filled.Delete,
                                         contentDescription = null,
-                                        tint = ActionDeleteContent
+                                        tint = SwipeActionDeleteContent
                                     )
                                     Text(
-                                        "삭제",
+                                        "영구 삭제",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionDeleteContent,
+                                        color = SwipeActionDeleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Outlined.Restore,
                                         contentDescription = null,
-                                        tint = ActionCompleteContent
+                                        tint = SwipeActionCompleteContent
                                     )
                                     Text(
                                         "복원",
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = ActionCompleteContent,
+                                        color = SwipeActionCompleteContent,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -147,14 +157,6 @@ fun ArchiveItem(
                 }
             }
         },
-        onDismissStartToEnd = {
-            if (swipeReversed) onDeletePermanent()
-            else onRestore()
-        },
-        onDismissEndToStart = {
-            if (swipeReversed) onRestore()
-            else onDeletePermanent()
-        }
     ) {
         Card(
             modifier = Modifier
@@ -186,7 +188,7 @@ fun ArchiveItem(
                 Icon(
                     imageVector = Icons.Filled.DoneAll,
                     contentDescription = null,
-                    tint = ActionComplete,
+                    tint = SwipeActionComplete,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
