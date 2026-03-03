@@ -1,7 +1,10 @@
 package com.naze.do_swipe.ui.home
 
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,19 +45,27 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.theme.Primary
 import com.naze.do_swipe.ui.theme.TextSecondary
+import androidx.compose.foundation.gestures.scrollBy
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
+import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
@@ -71,33 +83,36 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var draggedIndex by remember { mutableStateOf<Int?>(null) }
-    var dragOffsetY by remember { mutableStateOf(0f) }
-    var pendingItems by remember { mutableStateOf<List<TodoEntity>?>(null) }
-    val density = LocalDensity.current
     val listState = rememberLazyListState()
     var previousTodoCount by remember { mutableStateOf(activeTodos.size) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val itemHeightPx = with(density) { (72.dp + 8.dp).toPx() }
-    val dropTargetIndex: Int? = draggedIndex?.let { d ->
-        val raw = (d + (dragOffsetY / itemHeightPx).roundToInt())
-            .coerceIn(0, activeTodos.lastIndex.coerceAtLeast(0))
-        if (raw == d) null else raw
+    val density = LocalDensity.current
+    val autoScrollEdgePx = with(density) { 96.dp.toPx() }
+    val maxAutoScrollPerFramePx = with(density) { 22.dp.toPx() }
+
+    var listBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
+    var draggedItemId by remember { mutableStateOf<Long?>(null) }
+    var draggedFromIndex by remember { mutableStateOf<Int?>(null) }
+    var dropTargetIndex by remember { mutableStateOf<Int?>(null) }
+    var fingerYInRoot by remember { mutableStateOf(0f) }
+    var touchOffsetInItemPx by remember { mutableStateOf(0f) }
+    var ghostTopInRoot by remember { mutableStateOf(0f) }
+    var autoScrollPerFramePx by remember { mutableStateOf(0f) }
+
+    val draggedItem: TodoEntity? = remember(activeTodos, draggedItemId) {
+        activeTodos.firstOrNull { it.id == draggedItemId }
     }
-    LaunchedEffect(activeTodos) {
-        pendingItems = null
-    }
-    val visualItems: List<TodoEntity> = remember(activeTodos, draggedIndex, dropTargetIndex) {
-        val d = draggedIndex
-        val t = dropTargetIndex
-        if (d != null && t != null) {
-            activeTodos.toMutableList().apply { add(t, removeAt(d)) }
+
+    val displayItems: List<TodoEntity> = remember(activeTodos, draggedFromIndex, dropTargetIndex) {
+        val from = draggedFromIndex
+        val to = dropTargetIndex
+        if (from != null && to != null && from != to && activeTodos.isNotEmpty()) {
+            activeTodos.toMutableList().apply { add(to, removeAt(from)) }
         } else {
             activeTodos
         }
     }
-    val displayItems: List<TodoEntity> = pendingItems ?: visualItems
 
     LaunchedEffect(activeTodos.size) {
         val current = activeTodos.size
@@ -112,6 +127,35 @@ fun HomeScreen(
         if (openAddOnStart) {
             focusRequester.requestFocus()
             keyboardController?.show()
+        }
+    }
+
+    LaunchedEffect(draggedItemId, draggedItem) {
+        if (draggedItemId != null && draggedItem == null) {
+            draggedItemId = null
+            draggedFromIndex = null
+            dropTargetIndex = null
+            autoScrollPerFramePx = 0f
+        }
+    }
+
+    LaunchedEffect(draggedItemId, autoScrollPerFramePx) {
+        if (draggedItemId == null || autoScrollPerFramePx == 0f) return@LaunchedEffect
+        while (isActive && draggedItemId != null && autoScrollPerFramePx != 0f) {
+            val consumed = listState.scrollBy(autoScrollPerFramePx)
+            if (consumed == 0f) {
+                autoScrollPerFramePx = 0f
+                break
+            }
+            val localY = (fingerYInRoot - (listBoundsInRoot?.top ?: 0f)).toInt()
+            val target = calculateTargetIndex(
+                items = activeTodos,
+                visible = listState.layoutInfo.visibleItemsInfo,
+                localPointerY = localY
+            )
+            val from = draggedFromIndex
+            dropTargetIndex = if (from != null && target != null && target != from) target else null
+            delay(16)
         }
     }
 
@@ -142,151 +186,270 @@ fun HomeScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-        ) {
-            if (activeTodos.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "할 일이 없습니다",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary
+                .pointerInput(Unit) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { offset ->
+                            val bounds = listBoundsInRoot ?: return@detectDragGesturesAfterLongPress
+                            val localY = (offset.y - bounds.top).toInt()
+                            val hit = listState.layoutInfo.visibleItemsInfo.firstOrNull { info ->
+                                localY in info.offset until (info.offset + info.size)
+                            } ?: return@detectDragGesturesAfterLongPress
+                            val picked = activeTodos.getOrNull(hit.index) ?: return@detectDragGesturesAfterLongPress
+
+                            draggedItemId = picked.id
+                            draggedFromIndex = hit.index
+                            dropTargetIndex = null
+                            fingerYInRoot = offset.y
+                            touchOffsetInItemPx = (offset.y - bounds.top) - hit.offset
+                            ghostTopInRoot = offset.y - touchOffsetInItemPx
+                        },
+                        onDrag = { change, dragAmount ->
+                            if (draggedItemId == null) return@detectDragGesturesAfterLongPress
+                            change.consume()
+                            fingerYInRoot += dragAmount.y
+                            ghostTopInRoot = fingerYInRoot - touchOffsetInItemPx
+
+                            val bounds = listBoundsInRoot
+                            autoScrollPerFramePx = if (bounds != null) {
+                                calculateAutoScrollPerFrame(
+                                    pointerYInRoot = fingerYInRoot,
+                                    listBoundsInRoot = bounds,
+                                    edgePx = autoScrollEdgePx,
+                                    maxPerFramePx = maxAutoScrollPerFramePx
+                                )
+                            } else {
+                                0f
+                            }
+
+                            val localY = (fingerYInRoot - (bounds?.top ?: 0f)).toInt()
+                            val target = calculateTargetIndex(
+                                items = activeTodos,
+                                visible = listState.layoutInfo.visibleItemsInfo,
+                                localPointerY = localY
+                            )
+                            val from = draggedFromIndex
+                            dropTargetIndex = if (from != null && target != null && target != from) target else null
+                        },
+                        onDragCancel = {
+                            draggedItemId = null
+                            draggedFromIndex = null
+                            dropTargetIndex = null
+                            autoScrollPerFramePx = 0f
+                        },
+                        onDragEnd = {
+                            val from = draggedFromIndex
+                            val to = dropTargetIndex
+                            if (from != null && to != null && from != to) {
+                                viewModel.reorder(activeTodos, from, to)
+                            }
+                            draggedItemId = null
+                            draggedFromIndex = null
+                            dropTargetIndex = null
+                            autoScrollPerFramePx = 0f
+                        }
                     )
                 }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    content = {
-                        itemsIndexed(
-                            items = displayItems,
-                            key = { _, it -> it.id }
-                        ) { index, todo ->
-                            val isDragging = todo.id == activeTodos.getOrNull(draggedIndex ?: -1)?.id
-                            HomeTodoItem(
-                                modifier = if (!isDragging) Modifier.animateItem() else Modifier,
-                                todo = todo,
-                                index = index,
-                                isDragging = isDragging,
-                                isDimmed = draggedIndex != null && !isDragging,
-                                onDragStart = {
-                                    draggedIndex = activeTodos.indexOfFirst { it.id == todo.id }
-                                    dragOffsetY = 0f
-                                },
-                                onDragMove = { deltaY -> dragOffsetY += deltaY },
-                                onDragEnd = {
-                                    val from = draggedIndex
-                                    val to = dropTargetIndex
-                                    if (from != null && to != null && from != to) {
-                                        pendingItems = activeTodos.toMutableList()
-                                            .apply { add(to, removeAt(from)) }
-                                        viewModel.reorder(activeTodos, from, to)
-                                    }
-                                    draggedIndex = null
-                                    dragOffsetY = 0f
-                                },
-                                viewModel = viewModel,
-                                swipeReversed = swipeReversedFromPrefs,
-                                onAfterComplete = { id ->
-                                    showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
-                                },
-                                onAfterDelete = { id ->
-                                    showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
-                                }
-                            )
-                        }
-                    }
-                )
-            }
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .imePadding()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(MaterialTheme.colorScheme.surface),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    androidx.compose.material3.OutlinedTextField(
-                        value = newTitle,
-                        onValueChange = {
-                            if (it.length <= 60) {
-                                newTitle = it
-                            }
-                        },
+                if (activeTodos.isEmpty()) {
+                    Column(
                         modifier = Modifier
                             .weight(1f)
-                            .focusRequester(focusRequester),
-                        placeholder = {
-                            Text(
-                                "다음 할 일은?",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextSecondary
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "할 일이 없습니다",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .onGloballyPositioned { coords ->
+                                listBoundsInRoot = coords.boundsInParent()
+                            }
+                    ) {
+                        LazyColumn(
+                            state = listState,
+                            userScrollEnabled = draggedItemId == null,
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            content = {
+                                itemsIndexed(
+                                    items = displayItems,
+                                    key = { _, it -> it.id }
+                                ) { _, todo ->
+                                    val isSourceItem = todo.id == draggedItemId
+                                    HomeTodoItem(
+                                        modifier = (if (!isSourceItem) Modifier.animateItem() else Modifier)
+                                            .alpha(if (isSourceItem) 0f else 1f),
+                                        todo = todo,
+                                        isDragging = false,
+                                        isDimmed = draggedItemId != null && !isSourceItem,
+                                        viewModel = viewModel,
+                                        swipeReversed = swipeReversedFromPrefs,
+                                        onAfterComplete = { id ->
+                                            showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
+                                        },
+                                        onAfterDelete = { id ->
+                                            showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
+                                        },
+                                        enableInteractions = draggedItemId == null
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier
+                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .imePadding()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(MaterialTheme.colorScheme.surface),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.OutlinedTextField(
+                            value = newTitle,
+                            onValueChange = {
+                                if (it.length <= 60) {
+                                    newTitle = it
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester),
+                            placeholder = {
+                                Text(
+                                    "다음 할 일은?",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextSecondary
+                                )
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(32.dp),
+                            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                cursorColor = MaterialTheme.colorScheme.primary,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (newTitle.isNotBlank()) {
+                                        viewModel.addTodo(newTitle.trim(), newImportant)
+                                        newTitle = ""
+                                        newImportant = false
+                                    }
+                                }
                             )
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(32.dp),
-                        colors = androidx.compose.material3.TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                            unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
+                        )
+                        FilledIconButton(
+                            onClick = {
                                 if (newTitle.isNotBlank()) {
                                     viewModel.addTodo(newTitle.trim(), newImportant)
                                     newTitle = ""
                                     newImportant = false
                                 }
-                            }
-                        )
-                    )
-                    FilledIconButton(
-                        onClick = {
-                            if (newTitle.isNotBlank()) {
-                                viewModel.addTodo(newTitle.trim(), newImportant)
-                                newTitle = ""
-                                newImportant = false
-                            }
-                        },
-                        modifier = Modifier.padding(4.dp),
-                        shape = RoundedCornerShape(50),
-                        colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                            containerColor = Primary,
-                            contentColor = androidx.compose.ui.graphics.Color.White
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "추가",
-                            modifier = Modifier.padding(2.dp)
-                        )
+                            },
+                            modifier = Modifier.padding(4.dp),
+                            shape = RoundedCornerShape(50),
+                            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                                containerColor = Primary,
+                                contentColor = androidx.compose.ui.graphics.Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "추가",
+                                modifier = Modifier.padding(2.dp)
+                            )
+                        }
                     }
                 }
             }
+
+            if (draggedItem != null) {
+                HomeTodoItem(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .alpha(0.92f)
+                        .graphicsLayer {
+                            translationY = ghostTopInRoot
+                        },
+                    todo = draggedItem,
+                    isDragging = true,
+                    isDimmed = false,
+                    viewModel = viewModel,
+                    swipeReversed = swipeReversedFromPrefs,
+                    enableInteractions = false
+                )
+            }
         }
+    }
+}
+
+private fun calculateTargetIndex(
+    items: List<TodoEntity>,
+    visible: List<LazyListItemInfo>,
+    localPointerY: Int
+): Int? {
+    if (items.isEmpty() || visible.isEmpty()) return null
+    val first = visible.first()
+    val last = visible.last()
+    return when {
+        localPointerY <= first.offset -> 0
+        localPointerY >= last.offset + last.size -> items.lastIndex
+        else -> {
+            visible.firstOrNull { info ->
+                localPointerY in info.offset until (info.offset + info.size)
+            }?.index ?: visible.minByOrNull { info ->
+                abs(localPointerY - (info.offset + info.size / 2))
+            }?.index
+        }
+    }?.coerceIn(0, items.lastIndex)
+}
+
+private fun calculateAutoScrollPerFrame(
+    pointerYInRoot: Float,
+    listBoundsInRoot: Rect,
+    edgePx: Float,
+    maxPerFramePx: Float
+): Float {
+    val topZone = listBoundsInRoot.top + edgePx
+    val bottomZone = listBoundsInRoot.bottom - edgePx
+    return when {
+        pointerYInRoot < topZone -> {
+            val ratio = ((topZone - pointerYInRoot) / edgePx).coerceIn(0f, 1f)
+            -maxPerFramePx * ratio
+        }
+        pointerYInRoot > bottomZone -> {
+            val ratio = ((pointerYInRoot - bottomZone) / edgePx).coerceIn(0f, 1f)
+            maxPerFramePx * ratio
+        }
+        else -> 0f
     }
 }

@@ -3,7 +3,6 @@ package com.naze.do_swipe.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -39,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.local.TodoEntity
@@ -56,16 +53,13 @@ import com.naze.do_swipe.ui.theme.TextSecondary
 fun HomeTodoItem(
     modifier: Modifier = Modifier,
     todo: TodoEntity,
-    index: Int,
     isDragging: Boolean,
     isDimmed: Boolean,
-    onDragStart: () -> Unit,
-    onDragMove: (deltaY: Float) -> Unit,
-    onDragEnd: () -> Unit,
     viewModel: HomeViewModel,
     swipeReversed: Boolean = false,
     onAfterComplete: ((Long) -> Unit)? = null,
-    onAfterDelete: ((Long) -> Unit)? = null
+    onAfterDelete: ((Long) -> Unit)? = null,
+    enableInteractions: Boolean = true
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var editTitle by remember(todo.id) { mutableStateOf(todo.title) }
@@ -132,127 +126,18 @@ fun HomeTodoItem(
     val cardShape = RoundedCornerShape(24.dp)
     val scale by animateFloatAsState(if (isDragging) 1.05f else 1f, animationSpec = tween(200))
     val alpha by animateFloatAsState(if (isDimmed) 0.6f else 1f, animationSpec = tween(150))
-    val currentOnDragStart by rememberUpdatedState(onDragStart)
-    val currentOnDragMove by rememberUpdatedState(onDragMove)
-    val currentOnDragEnd by rememberUpdatedState(onDragEnd)
-    SwipeToDismissBox(
-        modifier = modifier
-            .zIndex(if (isDragging) 1f else 0f)
-            .fillMaxWidth(),
-        clipToBounds = !isDragging,
-        thresholdFraction = 0.5f,
-        backgroundContent = { direction ->
-            Card(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(if (isDragging) 0f else 1f),
-                shape = cardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = when (direction) {
-                        SwipeDirection.EndToStart ->
-                            if (swipeReversed) SwipeActionComplete else SwipeActionDelete
-                        SwipeDirection.StartToEnd ->
-                            if (swipeReversed) SwipeActionDelete else SwipeActionComplete
-                        null -> MaterialTheme.colorScheme.surfaceVariant
-                    }
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = when (direction) {
-                            SwipeDirection.EndToStart -> Arrangement.End
-                            SwipeDirection.StartToEnd -> Arrangement.Start
-                            null -> Arrangement.Center
-                        }
-                    ) {
-                        when (direction) {
-                            SwipeDirection.EndToStart -> {
-                                if (swipeReversed) {
-                                    Icon(
-                                        imageVector = Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        tint = SwipeActionCompleteContent
-                                    )
-                                    Text(
-                                        "완료",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = SwipeActionCompleteContent,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Filled.Delete,
-                                        contentDescription = null,
-                                        tint = SwipeActionDeleteContent
-                                    )
-                                    Text(
-                                        "삭제",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = SwipeActionDeleteContent,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
-                                }
-                            }
-                            SwipeDirection.StartToEnd -> {
-                                if (swipeReversed) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Delete,
-                                        contentDescription = null,
-                                        tint = SwipeActionDeleteContent
-                                    )
-                                    Text(
-                                        "삭제",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = SwipeActionDeleteContent,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        tint = SwipeActionCompleteContent
-                                    )
-                                    Text(
-                                        "완료",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = SwipeActionCompleteContent,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
-                                }
-                            }
-                            null -> {}
-                        }
-                    }
+    val cardContent: @Composable () -> Unit = {
+        val clickableModifier = if (enableInteractions) {
+            Modifier.combinedClickable(
+                onClick = {
+                    editTitle = todo.title
+                    showEditDialog = true
                 }
-            }
-        },
-        onDismissStartToEnd = {
-            if (swipeReversed) {
-                viewModel.markDeleted(todo.id)
-                onAfterDelete?.invoke(todo.id)
-            } else {
-                viewModel.setCompleted(todo.id, true)
-                onAfterComplete?.invoke(todo.id)
-            }
-        },
-        onDismissEndToStart = {
-            if (swipeReversed) {
-                viewModel.setCompleted(todo.id, true)
-                onAfterComplete?.invoke(todo.id)
-            } else {
-                viewModel.markDeleted(todo.id)
-                onAfterDelete?.invoke(todo.id)
-            }
+            )
+        } else {
+            Modifier
         }
-    ) {
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -262,20 +147,7 @@ fun HomeTodoItem(
                     scaleY = scale,
                     alpha = alpha
                 )
-                .pointerInput(Unit) {
-                    detectDragGesturesAfterLongPress(
-                        onDragStart = { currentOnDragStart() },
-                        onDrag = { _, delta -> currentOnDragMove(delta.y) },
-                        onDragEnd = { currentOnDragEnd() },
-                        onDragCancel = { currentOnDragEnd() }
-                    )
-                }
-                .combinedClickable(
-                    onClick = {
-                        editTitle = todo.title
-                        showEditDialog = true
-                    }
-                ),
+                .then(clickableModifier),
             shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 0.dp)
@@ -300,6 +172,139 @@ fun HomeTodoItem(
                     modifier = Modifier.weight(1f)
                 )
             }
+        }
+    }
+
+    if (enableInteractions) {
+        SwipeToDismissBox(
+            modifier = modifier
+                .zIndex(if (isDragging) 1f else 0f)
+                .fillMaxWidth(),
+            clipToBounds = !isDragging,
+            thresholdFraction = 0.5f,
+            backgroundContent = { direction ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(if (isDragging) 0f else 1f),
+                    shape = cardShape,
+                    colors = CardDefaults.cardColors(
+                        containerColor = when (direction) {
+                            SwipeDirection.EndToStart ->
+                                if (swipeReversed) SwipeActionComplete else SwipeActionDelete
+                            SwipeDirection.StartToEnd ->
+                                if (swipeReversed) SwipeActionDelete else SwipeActionComplete
+                            null -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = when (direction) {
+                                SwipeDirection.EndToStart -> Arrangement.End
+                                SwipeDirection.StartToEnd -> Arrangement.Start
+                                null -> Arrangement.Center
+                            }
+                        ) {
+                            when (direction) {
+                                SwipeDirection.EndToStart -> {
+                                    if (swipeReversed) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = null,
+                                            tint = SwipeActionCompleteContent
+                                        )
+                                        Text(
+                                            "완료",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = SwipeActionCompleteContent,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = null,
+                                            tint = SwipeActionDeleteContent
+                                        )
+                                        Text(
+                                            "삭제",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = SwipeActionDeleteContent,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
+                                }
+                                SwipeDirection.StartToEnd -> {
+                                    if (swipeReversed) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = null,
+                                            tint = SwipeActionDeleteContent
+                                        )
+                                        Text(
+                                            "삭제",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = SwipeActionDeleteContent,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = null,
+                                            tint = SwipeActionCompleteContent
+                                        )
+                                        Text(
+                                            "완료",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = SwipeActionCompleteContent,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
+                                }
+                                null -> {}
+                            }
+                        }
+                    }
+                }
+            },
+            onDismissStartToEnd = {
+                if (swipeReversed) {
+                    viewModel.markDeleted(todo.id)
+                    onAfterDelete?.invoke(todo.id)
+                } else {
+                    viewModel.setCompleted(todo.id, true)
+                    onAfterComplete?.invoke(todo.id)
+                }
+            },
+            onDismissEndToStart = {
+                if (swipeReversed) {
+                    viewModel.setCompleted(todo.id, true)
+                    onAfterComplete?.invoke(todo.id)
+                } else {
+                    viewModel.markDeleted(todo.id)
+                    onAfterDelete?.invoke(todo.id)
+                }
+            }
+        ) {
+            cardContent()
+        }
+    } else {
+        Card(
+            modifier = modifier
+                .zIndex(if (isDragging) 1f else 0f)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            cardContent()
         }
     }
 }
