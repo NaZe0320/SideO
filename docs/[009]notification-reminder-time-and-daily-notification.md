@@ -1,6 +1,8 @@
 # [009] 알림 시간 설정 및 미완료 할일 Notification
 
 - **앱**: com.naze.do_swipe  
+- **versionCode**: 4  
+- **versionName**: 0.1.1  
 - **대상 기능**: 설정의 알림 ON/OFF, 알림 시간 설정, 매일 지정 시각에 미완료 할 일 개수·목록 Notification
 
 ---
