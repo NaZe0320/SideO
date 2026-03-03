@@ -54,9 +54,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.theme.Primary
@@ -66,6 +70,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -92,6 +97,8 @@ fun HomeScreen(
     val maxAutoScrollPerFramePx = with(density) { 22.dp.toPx() }
 
     var listBoundsInRoot by remember { mutableStateOf<Rect?>(null) }
+    var containerTopInRoot by remember { mutableStateOf(0f) }
+    var dragStartContainerTopInRoot by remember { mutableStateOf(0f) }
     var draggedItemId by remember { mutableStateOf<Long?>(null) }
     var draggedFromIndex by remember { mutableStateOf<Int?>(null) }
     var dropTargetIndex by remember { mutableStateOf<Int?>(null) }
@@ -190,22 +197,27 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .onGloballyPositioned { coords ->
+                    containerTopInRoot = coords.boundsInRoot().top
+                }
                 .pointerInput(Unit) {
                     detectDragGesturesAfterLongPress(
                         onDragStart = { offset ->
                             val bounds = listBoundsInRoot ?: return@detectDragGesturesAfterLongPress
-                            val localY = (offset.y - bounds.top).toInt()
+                            val pointerYInRoot = containerTopInRoot + offset.y
+                            val localY = (pointerYInRoot - bounds.top).toInt()
                             val hit = listState.layoutInfo.visibleItemsInfo.firstOrNull { info ->
                                 localY in info.offset until (info.offset + info.size)
                             } ?: return@detectDragGesturesAfterLongPress
                             val picked = activeTodos.getOrNull(hit.index) ?: return@detectDragGesturesAfterLongPress
 
-                            draggedItemId = picked.id
+                            dragStartContainerTopInRoot = containerTopInRoot
+                            fingerYInRoot = pointerYInRoot
+                            touchOffsetInItemPx = (localY - hit.offset).toFloat()
+                            ghostTopInRoot = pointerYInRoot - touchOffsetInItemPx
                             draggedFromIndex = hit.index
                             dropTargetIndex = null
-                            fingerYInRoot = offset.y
-                            touchOffsetInItemPx = (offset.y - bounds.top) - hit.offset
-                            ghostTopInRoot = offset.y - touchOffsetInItemPx
+                            draggedItemId = picked.id
                         },
                         onDrag = { change, dragAmount ->
                             if (draggedItemId == null) return@detectDragGesturesAfterLongPress
@@ -239,6 +251,7 @@ fun HomeScreen(
                             draggedFromIndex = null
                             dropTargetIndex = null
                             autoScrollPerFramePx = 0f
+                            dragStartContainerTopInRoot = containerTopInRoot
                         },
                         onDragEnd = {
                             val from = draggedFromIndex
@@ -250,6 +263,7 @@ fun HomeScreen(
                             draggedFromIndex = null
                             dropTargetIndex = null
                             autoScrollPerFramePx = 0f
+                            dragStartContainerTopInRoot = containerTopInRoot
                         }
                     )
                 }
@@ -278,7 +292,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp)
                             .onGloballyPositioned { coords ->
-                                listBoundsInRoot = coords.boundsInParent()
+                                listBoundsInRoot = coords.boundsInRoot()
                             }
                     ) {
                         LazyColumn(
@@ -292,9 +306,14 @@ fun HomeScreen(
                                     key = { _, it -> it.id }
                                 ) { _, todo ->
                                     val isSourceItem = todo.id == draggedItemId
+                                    val sourceAlpha = when {
+                                        !isSourceItem -> 1f
+                                        draggedItem != null -> 0f
+                                        else -> 0.35f
+                                    }
                                     HomeTodoItem(
                                         modifier = (if (!isSourceItem) Modifier.animateItem() else Modifier)
-                                            .alpha(if (isSourceItem) 0f else 1f),
+                                            .alpha(sourceAlpha),
                                         todo = todo,
                                         isDragging = false,
                                         isDimmed = draggedItemId != null && !isSourceItem,
@@ -393,20 +412,33 @@ fun HomeScreen(
             }
 
             if (draggedItem != null) {
-                HomeTodoItem(
-                    modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .alpha(0.92f)
-                        .graphicsLayer {
-                            translationY = ghostTopInRoot
-                        },
-                    todo = draggedItem,
-                    isDragging = true,
-                    isDimmed = false,
-                    viewModel = viewModel,
-                    swipeReversed = swipeReversedFromPrefs,
-                    enableInteractions = false
-                )
+                Popup(
+                    alignment = Alignment.TopStart,
+                    offset = IntOffset(
+                        x = 0,
+                        y = (ghostTopInRoot - dragStartContainerTopInRoot).roundToInt()
+                    ),
+                    properties = PopupProperties(
+                        focusable = false,
+                        dismissOnBackPress = false,
+                        dismissOnClickOutside = false,
+                        clippingEnabled = false
+                    )
+                ) {
+                    HomeTodoItem(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .alpha(0.96f)
+                            .zIndex(1000f),
+                        todo = draggedItem,
+                        isDragging = true,
+                        isDimmed = false,
+                        viewModel = viewModel,
+                        swipeReversed = swipeReversedFromPrefs,
+                        enableInteractions = false
+                    )
+                }
             }
         }
     }

@@ -3,6 +3,7 @@ package com.naze.do_swipe.ui.home
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -297,12 +298,10 @@ fun HomeTodoItem(
             cardContent()
         }
     } else {
-        Card(
+        Box(
             modifier = modifier
                 .zIndex(if (isDragging) 1f else 0f)
-                .fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                .fillMaxWidth()
         ) {
             cardContent()
         }
