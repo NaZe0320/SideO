@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -74,6 +75,8 @@ fun HomeScreen(
     var dragOffsetY by remember { mutableStateOf(0f) }
     var pendingItems by remember { mutableStateOf<List<TodoEntity>?>(null) }
     val density = LocalDensity.current
+    val listState = rememberLazyListState()
+    var previousTodoCount by remember { mutableStateOf(activeTodos.size) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val itemHeightPx = with(density) { (72.dp + 8.dp).toPx() }
@@ -95,6 +98,15 @@ fun HomeScreen(
         }
     }
     val displayItems: List<TodoEntity> = pendingItems ?: visualItems
+
+    LaunchedEffect(activeTodos.size) {
+        val current = activeTodos.size
+        val prev = previousTodoCount
+        if (current > prev && current > 0) {
+            listState.animateScrollToItem(current - 1)
+        }
+        previousTodoCount = current
+    }
 
     LaunchedEffect(openAddOnStart) {
         if (openAddOnStart) {
@@ -151,6 +163,7 @@ fun HomeScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
