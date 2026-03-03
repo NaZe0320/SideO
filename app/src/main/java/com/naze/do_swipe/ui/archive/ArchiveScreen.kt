@@ -14,10 +14,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import com.naze.do_swipe.ui.components.AppTopBarSub
@@ -34,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.TodoApplication
+import com.naze.do_swipe.ui.components.showUndoSnackbar
 import com.naze.do_swipe.ui.theme.TextSecondary
 import com.naze.do_swipe.ui.trash.TrashItem
 import kotlinx.coroutines.launch
@@ -55,22 +54,6 @@ fun ArchiveScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    fun showSnackbarWithUndo(
-        message: String,
-        onUndo: () -> Unit
-    ) {
-        scope.launch {
-            val result = snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = "실행취소",
-                duration = SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                onUndo()
-            }
-        }
-    }
-
     if (pendingDeleteId != null) {
         val idToDelete = pendingDeleteId!!
         ConfirmDialog(
@@ -82,7 +65,9 @@ fun ArchiveScreen(
             onConfirm = {
                 pendingDeleteId = null
                 viewModel.schedulePermanentDelete(idToDelete)
-                showSnackbarWithUndo("삭제됨") { viewModel.cancelPendingDelete(idToDelete) }
+                scope.showUndoSnackbar(snackbarHostState, "삭제됨") {
+                    viewModel.cancelPendingDelete(idToDelete)
+                }
             },
             onDismiss = { pendingDeleteId = null }
         )
@@ -161,7 +146,9 @@ fun ArchiveScreen(
                                 todo = todo,
                                 onRestore = {
                                     viewModel.uncomplete(todo.id)
-                                    showSnackbarWithUndo("복원됨") { viewModel.recomplete(todo.id) }
+                                    scope.showUndoSnackbar(snackbarHostState, "복원됨") {
+                                        viewModel.recomplete(todo.id)
+                                    }
                                 },
                                 onRequestPermanentDelete = { pendingDeleteId = todo.id },
                                 swipeReversed = swipeReversed
@@ -204,7 +191,9 @@ fun ArchiveScreen(
                             todo = todo,
                             onRestore = {
                                 viewModel.restore(todo.id)
-                                showSnackbarWithUndo("복원됨") { viewModel.markDeletedAgain(todo.id) }
+                                scope.showUndoSnackbar(snackbarHostState, "복원됨") {
+                                    viewModel.markDeletedAgain(todo.id)
+                                }
                             },
                             onRequestPermanentDelete = { pendingDeleteId = todo.id },
                             swipeReversed = swipeReversed

@@ -28,10 +28,8 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.naze.do_swipe.ui.components.AppTopBarHome
@@ -63,6 +61,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.naze.do_swipe.TodoApplication
 import com.naze.do_swipe.data.local.TodoEntity
+import com.naze.do_swipe.ui.components.showUndoSnackbar
 import com.naze.do_swipe.ui.theme.Primary
 import com.naze.do_swipe.ui.theme.TextSecondary
 import androidx.compose.foundation.gestures.scrollBy
@@ -166,30 +165,35 @@ fun HomeScreen(
         }
     }
 
-    fun showSnackbarWithUndo(message: String, onUndo: () -> Unit) {
-        scope.launch {
-            val result = snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = "실행취소",
-                duration = SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                onUndo()
-            }
-        }
-    }
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = {
-            SnackbarHost(snackbarHostState, modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+            SnackbarHost(snackbarHostState)
         },
         topBar = {
             AppTopBarHome(
                 title = "Do! Swipe",
                 onArchiveClick = onNavigateToArchive,
                 onSettingsClick = onNavigateToSettings
+            )
+        },
+        bottomBar = {
+            HomeInputBar(
+                newTitle = newTitle,
+                onTitleChange = {
+                    if (it.length <= 60) {
+                        newTitle = it
+                    }
+                },
+                onSubmit = {
+                    if (newTitle.isNotBlank()) {
+                        viewModel.addTodo(newTitle.trim(), newImportant)
+                        newTitle = ""
+                        newImportant = false
+                    }
+                },
+                focusRequester = focusRequester
             )
         }
     ) { innerPadding ->
@@ -320,93 +324,20 @@ fun HomeScreen(
                                         viewModel = viewModel,
                                         swipeReversed = swipeReversedFromPrefs,
                                         onAfterComplete = { id ->
-                                            showSnackbarWithUndo("완료됨") { viewModel.setCompleted(id, false) }
+                                            scope.showUndoSnackbar(snackbarHostState, "완료됨") {
+                                                viewModel.setCompleted(id, false)
+                                            }
                                         },
                                         onAfterDelete = { id ->
-                                            showSnackbarWithUndo("휴지통으로 이동") { viewModel.restore(id) }
+                                            scope.showUndoSnackbar(snackbarHostState, "휴지통으로 이동") {
+                                                viewModel.restore(id)
+                                            }
                                         },
                                         enableInteractions = draggedItemId == null
                                     )
                                 }
                             }
                         )
-                    }
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                    modifier = Modifier
-                        .windowInsetsPadding(WindowInsets.navigationBars)
-                        .imePadding()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 16.dp)
-                            .clip(RoundedCornerShape(32.dp))
-                            .background(MaterialTheme.colorScheme.surface),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        androidx.compose.material3.OutlinedTextField(
-                            value = newTitle,
-                            onValueChange = {
-                                if (it.length <= 60) {
-                                    newTitle = it
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .focusRequester(focusRequester),
-                            placeholder = {
-                                Text(
-                                    "다음 할 일은?",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary
-                                )
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(32.dp),
-                            colors = androidx.compose.material3.TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                                cursorColor = MaterialTheme.colorScheme.primary,
-                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    if (newTitle.isNotBlank()) {
-                                        viewModel.addTodo(newTitle.trim(), newImportant)
-                                        newTitle = ""
-                                        newImportant = false
-                                    }
-                                }
-                            )
-                        )
-                        FilledIconButton(
-                            onClick = {
-                                if (newTitle.isNotBlank()) {
-                                    viewModel.addTodo(newTitle.trim(), newImportant)
-                                    newTitle = ""
-                                    newImportant = false
-                                }
-                            },
-                            modifier = Modifier.padding(4.dp),
-                            shape = RoundedCornerShape(50),
-                            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
-                                containerColor = Primary,
-                                contentColor = androidx.compose.ui.graphics.Color.White
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = "추가",
-                                modifier = Modifier.padding(2.dp)
-                            )
-                        }
                     }
                 }
             }
@@ -443,6 +374,77 @@ fun HomeScreen(
         }
     }
 }
+
+@Composable
+private fun HomeInputBar(
+    newTitle: String,
+    onTitleChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    focusRequester: FocusRequester
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .imePadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.surface),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            androidx.compose.material3.OutlinedTextField(
+                value = newTitle,
+                onValueChange = onTitleChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
+                placeholder = {
+                    Text(
+                        "다음 할 일은?",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(32.dp),
+                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { onSubmit() }
+                )
+            )
+            FilledIconButton(
+                onClick = onSubmit,
+                modifier = Modifier.padding(4.dp),
+                shape = RoundedCornerShape(50),
+                colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                    containerColor = Primary,
+                    contentColor = androidx.compose.ui.graphics.Color.White
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "추가",
+                    modifier = Modifier.padding(2.dp)
+                )
+            }
+        }
+    }
+}
+
 
 private fun calculateTargetIndex(
     items: List<TodoEntity>,
