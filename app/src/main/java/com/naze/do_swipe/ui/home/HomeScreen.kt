@@ -2,6 +2,7 @@ package com.naze.do_swipe.ui.home
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
@@ -356,19 +357,24 @@ fun HomeScreen(
                         clippingEnabled = false
                     )
                 ) {
-                    HomeTodoItem(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp)
+                            .shadow(6.dp, RoundedCornerShape(24.dp))
                             .alpha(0.96f)
-                            .zIndex(1000f),
-                        todo = draggedItem,
-                        isDragging = true,
-                        isDimmed = false,
-                        viewModel = viewModel,
-                        swipeReversed = swipeReversedFromPrefs,
-                        enableInteractions = false
-                    )
+                            .zIndex(1000f)
+                    ) {
+                        HomeTodoItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            todo = draggedItem,
+                            isDragging = true,
+                            isDimmed = false,
+                            viewModel = viewModel,
+                            swipeReversed = swipeReversedFromPrefs,
+                            enableInteractions = false
+                        )
+                    }
                 }
             }
         }

@@ -151,7 +151,7 @@ fun HomeTodoItem(
                 .then(clickableModifier),
             shape = cardShape,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 4.dp else 0.dp)
         ) {
             Row(
                 modifier = Modifier
