@@ -106,22 +106,25 @@ fun HomeScreen(
     var touchOffsetInItemPx by remember { mutableStateOf(0f) }
     var ghostTopInRoot by remember { mutableStateOf(0f) }
     var autoScrollPerFramePx by remember { mutableStateOf(0f) }
+    // 드롭 후 DB 업데이트 딜레이 동안 튀는 현상을 막기 위한 임시 리스트
+    var optimisticallyReorderedList by remember { mutableStateOf<List<TodoEntity>?>(null) }
 
     val draggedItem: TodoEntity? = remember(activeTodos, draggedItemId) {
         activeTodos.firstOrNull { it.id == draggedItemId }
     }
 
-    val displayItems: List<TodoEntity> = remember(activeTodos, draggedFromIndex, dropTargetIndex) {
+    val displayItems: List<TodoEntity> = remember(activeTodos, draggedFromIndex, dropTargetIndex, optimisticallyReorderedList) {
         val from = draggedFromIndex
         val to = dropTargetIndex
         if (from != null && to != null && from != to && activeTodos.isNotEmpty()) {
             activeTodos.toMutableList().apply { add(to, removeAt(from)) }
         } else {
-            activeTodos
+            optimisticallyReorderedList ?: activeTodos
         }
     }
 
-    LaunchedEffect(activeTodos.size) {
+    LaunchedEffect(activeTodos) {
+        optimisticallyReorderedList = null
         val current = activeTodos.size
         val prev = previousTodoCount
         if (current > prev && current > 0) {
@@ -262,6 +265,7 @@ fun HomeScreen(
                             val from = draggedFromIndex
                             val to = dropTargetIndex
                             if (from != null && to != null && from != to) {
+                                optimisticallyReorderedList = activeTodos.toMutableList().apply { add(to, removeAt(from)) }
                                 viewModel.reorder(activeTodos, from, to)
                             }
                             draggedItemId = null
@@ -317,7 +321,8 @@ fun HomeScreen(
                                         else -> 0.35f
                                     }
                                     HomeTodoItem(
-                                        modifier = (if (!isSourceItem) Modifier.animateItem() else Modifier)
+                                        modifier = Modifier
+                                            .animateItem()
                                             .alpha(sourceAlpha),
                                         todo = todo,
                                         isDragging = false,
