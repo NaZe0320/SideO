@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 enum class SwipeDirection {
@@ -41,7 +42,7 @@ enum class SwipeDirection {
  * @param onConfirmRequestedStartToEnd confirmBeforeDismissStartToEnd일 때 오른쪽 스와이프 확정 시 호출
  * @param onConfirmRequestedEndToStart confirmBeforeDismissEndToStart일 때 왼쪽 스와이프 확정 시 호출
  * @param backgroundContent 배경 UI. direction = null이면 중립 상태
- * @param content 앞쪽 콘텐츠 (카드 등). 이 크기가 전체 크기 기준
+ * @param content 앞쪽 콘텐츠 (카드 등). swipeProgress(0f~1f), direction 전달. 이 크기가 전체 크기 기준
  */
 @Composable
 fun SwipeToDismissBox(
@@ -55,7 +56,7 @@ fun SwipeToDismissBox(
     onConfirmRequestedEndToStart: (() -> Unit)? = null,
     onConfirmRequestedStartToEnd: (() -> Unit)? = null,
     backgroundContent: @Composable (direction: SwipeDirection?) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable (swipeProgress: Float, direction: SwipeDirection?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val offsetPx = remember { mutableStateOf(0f) }
@@ -72,6 +73,18 @@ fun SwipeToDismissBox(
                 offsetPx.value > 0f -> SwipeDirection.StartToEnd
                 offsetPx.value < 0f -> SwipeDirection.EndToStart
                 else -> null
+            }
+        }
+    }
+
+    val swipeProgress by remember {
+        derivedStateOf {
+            val threshold = widthPx * thresholdFraction
+            if (threshold <= 0f) 0f
+            else when {
+                offsetPx.value < 0f -> (-offsetPx.value / threshold).coerceIn(0f, 1f)
+                offsetPx.value > 0f -> (offsetPx.value / threshold).coerceIn(0f, 1f)
+                else -> 0f
             }
         }
     }
@@ -101,9 +114,8 @@ fun SwipeToDismissBox(
                 modifier = Modifier
                     .fillMaxWidth()
                     .graphicsLayer { translationX = offsetPx.value }
-                    .pointerInput(Unit) {
-                    // pointerInput(Unit): widthPx, thresholdFraction 변경 시 재시작 안 함
-                    // 대신 widthPx를 MutableState로 선언했으므로 항상 최신값을 읽음
+                    .pointerInput((thresholdFraction * 10).roundToInt()) {
+                    // Int 키(1~9)로 변경 시 제스처 블록이 확실히 재시작되어 최신 임계점 즉시 반영
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { _, delta ->
                             offsetPx.value = (offsetPx.value + delta)
@@ -175,7 +187,7 @@ fun SwipeToDismissBox(
                     )
                 }
             ) {
-                content()
+                content(swipeProgress, direction)
             }
         }
     }

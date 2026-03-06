@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.local.TodoEntity
@@ -58,6 +59,8 @@ fun HomeTodoItem(
     isDimmed: Boolean,
     viewModel: HomeViewModel,
     swipeReversed: Boolean = false,
+    swipeBackgroundBlendEnabled: Boolean = true,
+    thresholdFraction: Float = 0.5f,
     onAfterComplete: ((Long) -> Unit)? = null,
     onAfterDelete: ((Long) -> Unit)? = null,
     enableInteractions: Boolean = true
@@ -127,7 +130,8 @@ fun HomeTodoItem(
     val cardShape = RoundedCornerShape(24.dp)
     val scale by animateFloatAsState(if (isDragging) 1.05f else 1f, animationSpec = tween(200))
     val alpha by animateFloatAsState(if (isDimmed) 0.6f else 1f, animationSpec = tween(150))
-    val cardContent: @Composable () -> Unit = {
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val cardContent: @Composable (swipeProgress: Float, direction: SwipeDirection?) -> Unit = { swipeProgress, direction ->
         val clickableModifier = if (enableInteractions) {
             Modifier.combinedClickable(
                 onClick = {
@@ -138,7 +142,18 @@ fun HomeTodoItem(
         } else {
             Modifier
         }
-
+        val blendColor = if (swipeBackgroundBlendEnabled && direction != null) {
+            val targetColor = when (direction) {
+                SwipeDirection.EndToStart ->
+                    if (swipeReversed) SwipeActionComplete else SwipeActionDelete
+                SwipeDirection.StartToEnd ->
+                    if (swipeReversed) SwipeActionDelete else SwipeActionComplete
+                else -> surfaceColor
+            }
+            lerp(surfaceColor, targetColor, swipeProgress)
+        } else {
+            surfaceColor
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,7 +165,7 @@ fun HomeTodoItem(
                 )
                 .then(clickableModifier),
             shape = cardShape,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(containerColor = blendColor),
             elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 4.dp else 0.dp)
         ) {
             Row(
@@ -182,7 +197,7 @@ fun HomeTodoItem(
                 .zIndex(if (isDragging) 1f else 0f)
                 .fillMaxWidth(),
             clipToBounds = false,
-            thresholdFraction = 0.5f,
+            thresholdFraction = thresholdFraction,
             backgroundContent = { direction ->
                 Card(
                     modifier = Modifier
@@ -294,8 +309,8 @@ fun HomeTodoItem(
                     onAfterDelete?.invoke(todo.id)
                 }
             }
-        ) {
-            cardContent()
+        ) { swipeProgress, direction ->
+            cardContent(swipeProgress, direction)
         }
     } else {
         Box(
@@ -303,7 +318,7 @@ fun HomeTodoItem(
                 .zIndex(if (isDragging) 1f else 0f)
                 .fillMaxWidth()
         ) {
-            cardContent()
+            cardContent(0f, null)
         }
     }
 }
