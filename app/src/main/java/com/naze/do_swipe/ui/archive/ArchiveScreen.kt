@@ -46,6 +46,7 @@ fun ArchiveScreen(
 ) {
     val app = LocalContext.current.applicationContext as TodoApplication
     val swipeReversed by app.settingsRepository.swipeReversed.collectAsState(initial = false)
+    val swipeBackgroundBlendEnabled by app.settingsRepository.swipeBackgroundBlendEnabled.collectAsState(initial = true)
     val sections by viewModel.sections.collectAsState()
     val deletedTodos by viewModel.deletedTodos.collectAsState()
     val pendingDeleteIds by viewModel.pendingDeleteIds.collectAsState()
@@ -151,7 +152,8 @@ fun ArchiveScreen(
                                     }
                                 },
                                 onRequestPermanentDelete = { pendingDeleteId = todo.id },
-                                swipeReversed = swipeReversed
+                                swipeReversed = swipeReversed,
+                                swipeBackgroundBlendEnabled = swipeBackgroundBlendEnabled
                             )
                         }
                     }
@@ -196,7 +198,8 @@ fun ArchiveScreen(
                                 }
                             },
                             onRequestPermanentDelete = { pendingDeleteId = todo.id },
-                            swipeReversed = swipeReversed
+                            swipeReversed = swipeReversed,
+                            swipeBackgroundBlendEnabled = swipeBackgroundBlendEnabled
                         )
                     }
                 }
