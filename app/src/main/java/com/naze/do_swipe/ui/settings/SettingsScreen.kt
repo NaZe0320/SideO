@@ -572,7 +572,14 @@ private fun SettingsSliderItem(
                     Box(
                         modifier = Modifier
                             .size(16.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
+                    )
+                },
+                track = { sliderState ->
+                    SliderDefaults.Track(
+                        sliderState = sliderState,
+                        thumbTrackGapSize = 0.dp,
+                        drawStopIndicator = null
                     )
                 },
                 colors = SliderDefaults.colors(
