@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -299,7 +300,6 @@ fun HomeScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
                             .onGloballyPositioned { coords ->
                                 listBoundsInRoot = coords.boundsInRoot()
                             }
@@ -309,6 +309,7 @@ fun HomeScreen(
                             userScrollEnabled = draggedItemId == null,
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp),
                             content = {
                                 itemsIndexed(
                                     items = displayItems,

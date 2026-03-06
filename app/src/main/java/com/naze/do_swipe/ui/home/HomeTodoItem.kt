@@ -181,7 +181,7 @@ fun HomeTodoItem(
             modifier = modifier
                 .zIndex(if (isDragging) 1f else 0f)
                 .fillMaxWidth(),
-            clipToBounds = !isDragging,
+            clipToBounds = false,
             thresholdFraction = 0.5f,
             backgroundContent = { direction ->
                 Card(
