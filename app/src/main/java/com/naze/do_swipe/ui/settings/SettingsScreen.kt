@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,9 +66,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import kotlin.math.roundToInt
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.ui.theme.ActionComplete
 import com.naze.do_swipe.ui.theme.ActionDelete
@@ -196,12 +199,12 @@ fun SettingsScreen(
                 SettingsSliderItem(
                     icon = Icons.Outlined.Tune,
                     iconTint = Primary,
-                    title = "스와이프 임계점",
-                    subtitle = "낮을수록 적게 밀어도 확정됨 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
+                    title = "스와이프 확정 거리",
+                    subtitle = "낮음: 살짝만 밀어도 완료/삭제 · 높음: 더 밀어야 확정 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
                     value = swipeThresholdFraction,
                     valueRange = 0.1f..0.9f,
                     steps = 7,
-                    onValueChange = { viewModel.setSwipeThresholdFraction(it) }
+                    onValueChange = { viewModel.setSwipeThresholdFraction((it * 10).roundToInt() / 10f) }
                 )
             }
 
@@ -507,6 +510,7 @@ private fun SettingsRowItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsSliderItem(
     icon: ImageVector,
@@ -564,8 +568,15 @@ private fun SettingsSliderItem(
                 valueRange = valueRange,
                 steps = steps,
                 modifier = Modifier.padding(top = 8.dp),
+                thumb = {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    )
+                },
                 colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
+                    thumbColor = Color.Transparent,
                     activeTrackColor = MaterialTheme.colorScheme.primary
                 )
             )

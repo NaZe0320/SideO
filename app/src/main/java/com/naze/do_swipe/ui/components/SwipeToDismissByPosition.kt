@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 enum class SwipeDirection {
@@ -113,9 +114,8 @@ fun SwipeToDismissBox(
                 modifier = Modifier
                     .fillMaxWidth()
                     .graphicsLayer { translationX = offsetPx.value }
-                    .pointerInput(Unit) {
-                    // pointerInput(Unit): widthPx, thresholdFraction 변경 시 재시작 안 함
-                    // 대신 widthPx를 MutableState로 선언했으므로 항상 최신값을 읽음
+                    .pointerInput((thresholdFraction * 10).roundToInt()) {
+                    // Int 키(1~9)로 변경 시 제스처 블록이 확실히 재시작되어 최신 임계점 즉시 반영
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { _, delta ->
                             offsetPx.value = (offsetPx.value + delta)

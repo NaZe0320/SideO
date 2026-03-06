@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.roundToInt
 
 enum class ThemeMode(val value: Int) {
     SYSTEM(0),
@@ -58,8 +59,9 @@ class SettingsRepository(context: Context) {
 
     fun setSwipeThresholdFraction(value: Float) {
         val clamped = value.coerceIn(0.1f, 0.9f)
-        prefs.edit().putFloat(KEY_SWIPE_THRESHOLD, clamped).apply()
-        _swipeThresholdFraction.value = clamped
+        val step10 = (clamped * 10).roundToInt() / 10f // 0.1, 0.2, …, 0.9
+        prefs.edit().putFloat(KEY_SWIPE_THRESHOLD, step10).apply()
+        _swipeThresholdFraction.value = step10
     }
 
     fun setRemindersEnabled(enabled: Boolean) {
@@ -80,6 +82,8 @@ class SettingsRepository(context: Context) {
 
     fun getReminderHour(): Int = prefs.getInt(KEY_REMINDER_HOUR, 9)
     fun getReminderMinute(): Int = prefs.getInt(KEY_REMINDER_MINUTE, 0)
+
+    fun getSwipeThresholdFraction(): Float = prefs.getFloat(KEY_SWIPE_THRESHOLD, 0.5f)
 
     companion object {
         private const val PREFS_NAME = "do_swipe_settings"

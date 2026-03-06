@@ -47,7 +47,7 @@ fun ArchiveScreen(
     val app = LocalContext.current.applicationContext as TodoApplication
     val swipeReversed by app.settingsRepository.swipeReversed.collectAsState(initial = false)
     val swipeBackgroundBlendEnabled by app.settingsRepository.swipeBackgroundBlendEnabled.collectAsState(initial = true)
-    val swipeThresholdFraction by app.settingsRepository.swipeThresholdFraction.collectAsState(initial = 0.5f)
+    val swipeThresholdFraction by app.settingsRepository.swipeThresholdFraction.collectAsState(initial = app.settingsRepository.getSwipeThresholdFraction())
     val sections by viewModel.sections.collectAsState()
     val deletedTodos by viewModel.deletedTodos.collectAsState()
     val pendingDeleteIds by viewModel.pendingDeleteIds.collectAsState()
