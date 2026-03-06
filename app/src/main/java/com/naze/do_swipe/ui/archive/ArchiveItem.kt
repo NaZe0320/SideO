@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.data.local.TodoEntity
@@ -42,6 +43,8 @@ fun ArchiveItem(
     onRestore: () -> Unit,
     onRequestPermanentDelete: () -> Unit,
     swipeReversed: Boolean,
+    swipeBackgroundBlendEnabled: Boolean = true,
+    thresholdFraction: Float = 0.5f,
     modifier: Modifier = Modifier
 ) {
     val completedAt = todo.completedAt ?: todo.createdAt
@@ -55,7 +58,7 @@ fun ArchiveItem(
     val cardShape = RoundedCornerShape(24.dp)
     SwipeToDismissBox(
         modifier = modifier.fillMaxWidth(),
-        thresholdFraction = 0.5f,
+        thresholdFraction = thresholdFraction,
         confirmBeforeDismissEndToStart = !swipeReversed,
         confirmBeforeDismissStartToEnd = swipeReversed,
         onDismissStartToEnd = {
@@ -157,12 +160,25 @@ fun ArchiveItem(
                 }
             }
         },
-    ) {
+    ) { swipeProgress, direction ->
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        val blendColor = if (swipeBackgroundBlendEnabled && direction != null) {
+            val targetColor = when (direction) {
+                SwipeDirection.EndToStart ->
+                    if (swipeReversed) SwipeActionComplete else SwipeActionDelete
+                SwipeDirection.StartToEnd ->
+                    if (swipeReversed) SwipeActionDelete else SwipeActionComplete
+                else -> surfaceColor
+            }
+            lerp(surfaceColor, targetColor, swipeProgress)
+        } else {
+            surfaceColor
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth(),
             shape = cardShape,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(containerColor = blendColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Row(

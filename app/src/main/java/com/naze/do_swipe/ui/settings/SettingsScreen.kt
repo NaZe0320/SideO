@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Tune
 import com.naze.do_swipe.ui.components.ConfirmDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -45,9 +48,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -66,9 +71,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import kotlin.math.roundToInt
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.ui.theme.ActionComplete
 import com.naze.do_swipe.ui.theme.ActionDelete
@@ -84,6 +91,8 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val swipeReversed by viewModel.swipeReversed.collectAsState()
+    val swipeBackgroundBlendEnabled by viewModel.swipeBackgroundBlendEnabled.collectAsState()
+    val swipeThresholdFraction by viewModel.swipeThresholdFraction.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     val reminderHour by viewModel.reminderHour.collectAsState()
     val reminderMinute by viewModel.reminderMinute.collectAsState()
@@ -158,7 +167,7 @@ fun SettingsScreen(
                 onBackClick = onNavigateBack
             )
         }
-    ) { contentPadding ->
+    ) { contentPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -181,6 +190,26 @@ fun SettingsScreen(
                     subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
                     checked = swipeReversed,
                     onCheckedChange = { viewModel.setSwipeReversed(it) }
+                )
+                HorizontalDivider()
+                SettingsSwitchItem(
+                    icon = Icons.Outlined.SwapHoriz,
+                    iconTint = Primary,
+                    title = "스와이프 시 배경색 블렌딩",
+                    subtitle = "임계점에 가까울수록 카드 색이 삭제/완료 색으로 변해요",
+                    checked = swipeBackgroundBlendEnabled,
+                    onCheckedChange = { viewModel.setSwipeBackgroundBlendEnabled(it) }
+                )
+                HorizontalDivider()
+                SettingsSliderItem(
+                    icon = Icons.Outlined.Tune,
+                    iconTint = Primary,
+                    title = "스와이프 확정 거리",
+                    subtitle = "낮음: 살짝만 밀어도 완료/삭제 · 높음: 더 밀어야 확정 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
+                    value = swipeThresholdFraction,
+                    valueRange = 0.1f..0.9f,
+                    steps = 7,
+                    onValueChange = { viewModel.setSwipeThresholdFraction((it * 10).roundToInt() / 10f) }
                 )
             }
 
@@ -498,6 +527,87 @@ private fun formatReminderTime12h(hour: Int, minute: Int): String {
     return "$ampm $displayHour:%02d".format(m)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsSliderItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+    iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (iconTint == Primary || iconTint == ActionComplete || iconTint == ActionDelete)
+                        iconTint.copy(alpha = 0.12f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                valueRange = valueRange,
+                steps = steps,
+                modifier = Modifier.padding(top = 8.dp),
+                thumb = {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
+                    )
+                },
+                track = { sliderState ->
+                    SliderDefaults.Track(
+                        sliderState = sliderState,
+                        thumbTrackGapSize = 0.dp,
+                        drawStopIndicator = null
+                    )
+                },
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.Transparent,
+                    activeTrackColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    }
+}
+
 private const val PRIVACY_POLICY_URL = "https://do-swipe.web.app/privacy.html"
 private const val TERMS_OF_SERVICE_URL = "https://do-swipe.web.app/terms.html"
 
@@ -558,7 +668,7 @@ private fun ReminderTimePickerDialog(
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) { 
+                ) {
                     FilterChip(
                         selected = !isAfternoon,
                         onClick = { isAfternoon = false },
