@@ -153,7 +153,7 @@ fun TrashItem(
                 }
             }
         },
-    ) {
+    ) { _, _ ->
         Card(
             modifier = Modifier
                 .fillMaxWidth(),

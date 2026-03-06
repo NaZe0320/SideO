@@ -80,6 +80,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val swipeReversed by viewModel.swipeReversed.collectAsState()
+    val swipeBackgroundBlendEnabled by viewModel.swipeBackgroundBlendEnabled.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     val reminderHour by viewModel.reminderHour.collectAsState()
     val reminderMinute by viewModel.reminderMinute.collectAsState()
@@ -177,6 +178,15 @@ fun SettingsScreen(
                     subtitle = if (swipeReversed) "왼쪽: 삭제 / 오른쪽: 완료" else "왼쪽: 완료 / 오른쪽: 삭제",
                     checked = swipeReversed,
                     onCheckedChange = { viewModel.setSwipeReversed(it) }
+                )
+                HorizontalDivider()
+                SettingsSwitchItem(
+                    icon = Icons.Outlined.SwapHoriz,
+                    iconTint = Primary,
+                    title = "스와이프 시 배경색 블렌딩",
+                    subtitle = "임계점에 가까울수록 카드 색이 삭제/완료 색으로 변해요",
+                    checked = swipeBackgroundBlendEnabled,
+                    onCheckedChange = { viewModel.setSwipeBackgroundBlendEnabled(it) }
                 )
             }
 

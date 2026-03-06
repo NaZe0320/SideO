@@ -26,6 +26,9 @@ class SettingsRepository(context: Context) {
     private val _swipeReversed = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_REVERSED, false))
     val swipeReversed: StateFlow<Boolean> = _swipeReversed.asStateFlow()
 
+    private val _swipeBackgroundBlendEnabled = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_BACKGROUND_BLEND, true))
+    val swipeBackgroundBlendEnabled: StateFlow<Boolean> = _swipeBackgroundBlendEnabled.asStateFlow()
+
     private val _remindersEnabled = MutableStateFlow(prefs.getBoolean(KEY_REMINDERS, false))
     val remindersEnabled: StateFlow<Boolean> = _remindersEnabled.asStateFlow()
 
@@ -43,6 +46,11 @@ class SettingsRepository(context: Context) {
     fun setSwipeReversed(reversed: Boolean) {
         prefs.edit().putBoolean(KEY_SWIPE_REVERSED, reversed).apply()
         _swipeReversed.value = reversed
+    }
+
+    fun setSwipeBackgroundBlendEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SWIPE_BACKGROUND_BLEND, enabled).apply()
+        _swipeBackgroundBlendEnabled.value = enabled
     }
 
     fun setRemindersEnabled(enabled: Boolean) {
@@ -68,6 +76,7 @@ class SettingsRepository(context: Context) {
         private const val PREFS_NAME = "do_swipe_settings"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_SWIPE_REVERSED = "swipe_reversed"
+        private const val KEY_SWIPE_BACKGROUND_BLEND = "swipe_background_blend"
         private const val KEY_REMINDERS = "reminders_enabled"
         private const val KEY_REMINDER_HOUR = "reminder_hour"
         private const val KEY_REMINDER_MINUTE = "reminder_minute"

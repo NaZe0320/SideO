@@ -83,6 +83,7 @@ fun HomeScreen(
 ) {
     val app = LocalContext.current.applicationContext as TodoApplication
     val swipeReversedFromPrefs by app.settingsRepository.swipeReversed.collectAsState(initial = false)
+    val swipeBackgroundBlendFromPrefs by app.settingsRepository.swipeBackgroundBlendEnabled.collectAsState(initial = true)
     val activeTodos by viewModel.activeTodos.collectAsState()
     var newTitle by remember { mutableStateOf("") }
     var newImportant by remember { mutableStateOf(false) }
@@ -330,6 +331,7 @@ fun HomeScreen(
                                         isDimmed = draggedItemId != null && !isSourceItem,
                                         viewModel = viewModel,
                                         swipeReversed = swipeReversedFromPrefs,
+                                        swipeBackgroundBlendEnabled = swipeBackgroundBlendFromPrefs,
                                         onAfterComplete = { id ->
                                             scope.showUndoSnackbar(snackbarHostState, "완료됨") {
                                                 viewModel.setCompleted(id, false)
@@ -378,6 +380,7 @@ fun HomeScreen(
                             isDimmed = false,
                             viewModel = viewModel,
                             swipeReversed = swipeReversedFromPrefs,
+                            swipeBackgroundBlendEnabled = swipeBackgroundBlendFromPrefs,
                             enableInteractions = false
                         )
                     }

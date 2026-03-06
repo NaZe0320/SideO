@@ -30,6 +30,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
     val swipeReversed: StateFlow<Boolean> = settings.swipeReversed
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+    val swipeBackgroundBlendEnabled: StateFlow<Boolean> = settings.swipeBackgroundBlendEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     val remindersEnabled: StateFlow<Boolean> = settings.remindersEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val reminderHour: StateFlow<Int> = settings.reminderHour
@@ -43,6 +45,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setSwipeReversed(reversed: Boolean) {
         settings.setSwipeReversed(reversed)
+    }
+
+    fun setSwipeBackgroundBlendEnabled(enabled: Boolean) {
+        settings.setSwipeBackgroundBlendEnabled(enabled)
     }
 
     fun setRemindersEnabled(enabled: Boolean) {

@@ -41,7 +41,7 @@ enum class SwipeDirection {
  * @param onConfirmRequestedStartToEnd confirmBeforeDismissStartToEnd일 때 오른쪽 스와이프 확정 시 호출
  * @param onConfirmRequestedEndToStart confirmBeforeDismissEndToStart일 때 왼쪽 스와이프 확정 시 호출
  * @param backgroundContent 배경 UI. direction = null이면 중립 상태
- * @param content 앞쪽 콘텐츠 (카드 등). 이 크기가 전체 크기 기준
+ * @param content 앞쪽 콘텐츠 (카드 등). swipeProgress(0f~1f), direction 전달. 이 크기가 전체 크기 기준
  */
 @Composable
 fun SwipeToDismissBox(
@@ -55,7 +55,7 @@ fun SwipeToDismissBox(
     onConfirmRequestedEndToStart: (() -> Unit)? = null,
     onConfirmRequestedStartToEnd: (() -> Unit)? = null,
     backgroundContent: @Composable (direction: SwipeDirection?) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable (swipeProgress: Float, direction: SwipeDirection?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val offsetPx = remember { mutableStateOf(0f) }
@@ -72,6 +72,18 @@ fun SwipeToDismissBox(
                 offsetPx.value > 0f -> SwipeDirection.StartToEnd
                 offsetPx.value < 0f -> SwipeDirection.EndToStart
                 else -> null
+            }
+        }
+    }
+
+    val swipeProgress by remember {
+        derivedStateOf {
+            val threshold = widthPx * thresholdFraction
+            if (threshold <= 0f) 0f
+            else when {
+                offsetPx.value < 0f -> (-offsetPx.value / threshold).coerceIn(0f, 1f)
+                offsetPx.value > 0f -> (offsetPx.value / threshold).coerceIn(0f, 1f)
+                else -> 0f
             }
         }
     }
@@ -175,7 +187,7 @@ fun SwipeToDismissBox(
                     )
                 }
             ) {
-                content()
+                content(swipeProgress, direction)
             }
         }
     }

@@ -157,7 +157,7 @@ fun ArchiveItem(
                 }
             }
         },
-    ) {
+    ) { _, _ ->
         Card(
             modifier = Modifier
                 .fillMaxWidth(),
