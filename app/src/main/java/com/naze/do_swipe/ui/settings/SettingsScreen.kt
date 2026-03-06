@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Tune
 import com.naze.do_swipe.ui.components.ConfirmDialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -41,9 +42,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -81,6 +84,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val swipeReversed by viewModel.swipeReversed.collectAsState()
     val swipeBackgroundBlendEnabled by viewModel.swipeBackgroundBlendEnabled.collectAsState()
+    val swipeThresholdFraction by viewModel.swipeThresholdFraction.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     val reminderHour by viewModel.reminderHour.collectAsState()
     val reminderMinute by viewModel.reminderMinute.collectAsState()
@@ -155,7 +159,7 @@ fun SettingsScreen(
                 onBackClick = onNavigateBack
             )
         }
-    ) { contentPadding ->
+    ) { contentPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -187,6 +191,17 @@ fun SettingsScreen(
                     subtitle = "임계점에 가까울수록 카드 색이 삭제/완료 색으로 변해요",
                     checked = swipeBackgroundBlendEnabled,
                     onCheckedChange = { viewModel.setSwipeBackgroundBlendEnabled(it) }
+                )
+                HorizontalDivider()
+                SettingsSliderItem(
+                    icon = Icons.Outlined.Tune,
+                    iconTint = Primary,
+                    title = "스와이프 임계점",
+                    subtitle = "낮을수록 적게 밀어도 확정됨 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
+                    value = swipeThresholdFraction,
+                    valueRange = 0.1f..0.9f,
+                    steps = 7,
+                    onValueChange = { viewModel.setSwipeThresholdFraction(it) }
                 )
             }
 
@@ -489,6 +504,72 @@ private fun SettingsRowItem(
             )
         }
         trailing()
+    }
+}
+
+@Composable
+private fun SettingsSliderItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+    iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (iconTint == Primary || iconTint == ActionComplete || iconTint == ActionDelete)
+                        iconTint.copy(alpha = 0.12f)
+                    else
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+            Slider(
+                value = value,
+                onValueChange = onValueChange,
+                valueRange = valueRange,
+                steps = steps,
+                modifier = Modifier.padding(top = 8.dp),
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
     }
 }
 

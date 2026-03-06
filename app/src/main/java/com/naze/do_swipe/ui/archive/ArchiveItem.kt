@@ -44,6 +44,7 @@ fun ArchiveItem(
     onRequestPermanentDelete: () -> Unit,
     swipeReversed: Boolean,
     swipeBackgroundBlendEnabled: Boolean = true,
+    thresholdFraction: Float = 0.5f,
     modifier: Modifier = Modifier
 ) {
     val completedAt = todo.completedAt ?: todo.createdAt
@@ -57,7 +58,7 @@ fun ArchiveItem(
     val cardShape = RoundedCornerShape(24.dp)
     SwipeToDismissBox(
         modifier = modifier.fillMaxWidth(),
-        thresholdFraction = 0.5f,
+        thresholdFraction = thresholdFraction,
         confirmBeforeDismissEndToStart = !swipeReversed,
         confirmBeforeDismissStartToEnd = swipeReversed,
         onDismissStartToEnd = {

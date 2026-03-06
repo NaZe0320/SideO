@@ -60,6 +60,7 @@ fun HomeTodoItem(
     viewModel: HomeViewModel,
     swipeReversed: Boolean = false,
     swipeBackgroundBlendEnabled: Boolean = true,
+    thresholdFraction: Float = 0.5f,
     onAfterComplete: ((Long) -> Unit)? = null,
     onAfterDelete: ((Long) -> Unit)? = null,
     enableInteractions: Boolean = true
@@ -196,7 +197,7 @@ fun HomeTodoItem(
                 .zIndex(if (isDragging) 1f else 0f)
                 .fillMaxWidth(),
             clipToBounds = false,
-            thresholdFraction = 0.5f,
+            thresholdFraction = thresholdFraction,
             backgroundContent = { direction ->
                 Card(
                     modifier = Modifier

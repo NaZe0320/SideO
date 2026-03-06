@@ -29,6 +29,9 @@ class SettingsRepository(context: Context) {
     private val _swipeBackgroundBlendEnabled = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_BACKGROUND_BLEND, true))
     val swipeBackgroundBlendEnabled: StateFlow<Boolean> = _swipeBackgroundBlendEnabled.asStateFlow()
 
+    private val _swipeThresholdFraction = MutableStateFlow(prefs.getFloat(KEY_SWIPE_THRESHOLD, 0.5f))
+    val swipeThresholdFraction: StateFlow<Float> = _swipeThresholdFraction.asStateFlow()
+
     private val _remindersEnabled = MutableStateFlow(prefs.getBoolean(KEY_REMINDERS, false))
     val remindersEnabled: StateFlow<Boolean> = _remindersEnabled.asStateFlow()
 
@@ -51,6 +54,12 @@ class SettingsRepository(context: Context) {
     fun setSwipeBackgroundBlendEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_SWIPE_BACKGROUND_BLEND, enabled).apply()
         _swipeBackgroundBlendEnabled.value = enabled
+    }
+
+    fun setSwipeThresholdFraction(value: Float) {
+        val clamped = value.coerceIn(0.1f, 0.9f)
+        prefs.edit().putFloat(KEY_SWIPE_THRESHOLD, clamped).apply()
+        _swipeThresholdFraction.value = clamped
     }
 
     fun setRemindersEnabled(enabled: Boolean) {
@@ -77,6 +86,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_THEME = "theme_mode"
         private const val KEY_SWIPE_REVERSED = "swipe_reversed"
         private const val KEY_SWIPE_BACKGROUND_BLEND = "swipe_background_blend"
+        private const val KEY_SWIPE_THRESHOLD = "swipe_threshold"
         private const val KEY_REMINDERS = "reminders_enabled"
         private const val KEY_REMINDER_HOUR = "reminder_hour"
         private const val KEY_REMINDER_MINUTE = "reminder_minute"

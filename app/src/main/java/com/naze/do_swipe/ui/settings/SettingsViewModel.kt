@@ -32,6 +32,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val swipeBackgroundBlendEnabled: StateFlow<Boolean> = settings.swipeBackgroundBlendEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val swipeThresholdFraction: StateFlow<Float> = settings.swipeThresholdFraction
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.5f)
     val remindersEnabled: StateFlow<Boolean> = settings.remindersEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val reminderHour: StateFlow<Int> = settings.reminderHour
@@ -49,6 +51,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setSwipeBackgroundBlendEnabled(enabled: Boolean) {
         settings.setSwipeBackgroundBlendEnabled(enabled)
+    }
+
+    fun setSwipeThresholdFraction(value: Float) {
+        settings.setSwipeThresholdFraction(value)
     }
 
     fun setRemindersEnabled(enabled: Boolean) {
