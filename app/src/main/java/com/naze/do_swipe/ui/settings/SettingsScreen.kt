@@ -667,12 +667,14 @@ private fun ReminderTimePickerDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy((-12).dp),
+                    modifier = Modifier.clip(RoundedCornerShape(20.dp))
                 ) {
                     FilterChip(
                         selected = !isAfternoon,
                         onClick = { isAfternoon = false },
                         label = { Text("오전") },
+                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 0.dp, bottomStart = 0.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = primaryColor,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -682,6 +684,7 @@ private fun ReminderTimePickerDialog(
                         selected = isAfternoon,
                         onClick = { isAfternoon = true },
                         label = { Text("오후") },
+                        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 20.dp, bottomStart = 20.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = primaryColor,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
