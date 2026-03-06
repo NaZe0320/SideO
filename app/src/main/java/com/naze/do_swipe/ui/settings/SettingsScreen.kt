@@ -19,6 +19,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,9 +52,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimeInput
-import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -195,7 +199,7 @@ fun SettingsScreen(
                         iconTint = Primary,
                         title = "알림",
                         subtitle = if (remindersEnabled) {
-                            String.format("매일 %02d:%02d에 미완료 할 일을 알려줘요", reminderHour, reminderMinute)
+                            "매일 ${formatReminderTime12h(reminderHour, reminderMinute)}에 미완료 할 일을 알려줘요"
                         } else {
                             "알림을 끄면 미완료 할 일 알림이 오지 않아요"
                         },
@@ -211,7 +215,7 @@ fun SettingsScreen(
                         iconTint = if (remindersEnabled) Primary else TextSecondary,
                         title = "알림 시간",
                         subtitle = if (remindersEnabled) {
-                            String.format("매일 %02d:%02d에 알림", reminderHour, reminderMinute)
+                            "매일 ${formatReminderTime12h(reminderHour, reminderMinute)}에 알림"
                         } else {
                             "알림을 켜면 시간을 설정할 수 있어요"
                         },
@@ -482,6 +486,18 @@ private fun SettingsRowItem(
     }
 }
 
+private fun formatReminderTime12h(hour: Int, minute: Int): String {
+    val h = hour.coerceIn(0, 23)
+    val m = minute.coerceIn(0, 59)
+    val (ampm, displayHour) = when {
+        h == 0 -> "오전" to 12
+        h < 12 -> "오전" to h
+        h == 12 -> "오후" to 12
+        else -> "오후" to (h - 12)
+    }
+    return "$ampm $displayHour:%02d".format(m)
+}
+
 private const val PRIVACY_POLICY_URL = "https://do-swipe.web.app/privacy.html"
 private const val TERMS_OF_SERVICE_URL = "https://do-swipe.web.app/terms.html"
 
@@ -493,21 +509,118 @@ private fun ReminderTimePickerDialog(
     onConfirm: (hour: Int, minute: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val state = rememberTimePickerState(
-        initialHour = initialHour,
-        initialMinute = initialMinute,
-        is24Hour = true
-    )
+    fun hour24ToDisplay(h: Int): Int = when {
+        h == 0 -> 12
+        h <= 12 -> h
+        else -> h - 12
+    }
+
+    var hourText by remember {
+        mutableStateOf(hour24ToDisplay(initialHour.coerceIn(0, 23)).toString())
+    }
+    var minuteText by remember {
+        mutableStateOf(initialMinute.coerceIn(0, 59).toString().padStart(2, '0'))
+    }
+    var isAfternoon by remember { mutableStateOf(initialHour >= 12) }
+
+    val hourValid = hourText.toIntOrNull()?.let { it in 1..12 } == true
+    val minuteValid = minuteText.toIntOrNull()?.let { it in 0..59 } == true
+    val isValid = hourValid && minuteValid
+
+    fun toHour24(): Int {
+        val h = hourText.toIntOrNull() ?: return 0
+        return when {
+            !isAfternoon && h == 12 -> 0
+            !isAfternoon -> h
+            isAfternoon && h == 12 -> 12
+            else -> h + 12
+        }
+    }
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(24.dp),
         containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text("알림 시간", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface) },
+        title = {
+            Text(
+                "알림 시간",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
-            TimeInput(state = state)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) { 
+                    FilterChip(
+                        selected = !isAfternoon,
+                        onClick = { isAfternoon = false },
+                        label = { Text("오전") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = primaryColor,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                    FilterChip(
+                        selected = isAfternoon,
+                        onClick = { isAfternoon = true },
+                        label = { Text("오후") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = primaryColor,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+
+                OutlinedTextField(
+                    value = hourText,
+                    onValueChange = { v ->
+                        if (v.isEmpty()) hourText = ""
+                        else if (v.length <= 2 && v.all { it.isDigit() }) hourText = v
+                    },
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(
+                        textAlign = TextAlign.Center
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    isError = hourText.isNotEmpty() && !hourValid
+                )
+
+                Text(
+                    ":",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                OutlinedTextField(
+                    value = minuteText,
+                    onValueChange = { v ->
+                        if (v.isEmpty()) minuteText = ""
+                        else if (v.length <= 2 && v.all { it.isDigit() }) minuteText = v
+                    },
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(
+                        textAlign = TextAlign.Center
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    isError = minuteText.isNotEmpty() && !minuteValid
+                )
+            }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(state.hour, state.minute) }) {
+            TextButton(
+                onClick = { onConfirm(toHour24(), minuteText.toIntOrNull() ?: 0) },
+                enabled = isValid
+            ) {
                 Text("확인")
             }
         },
