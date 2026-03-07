@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.naze.do_swipe.TodoApplication
+import com.naze.do_swipe.analytics.AnalyticsEvents
 import com.naze.do_swipe.ui.components.showUndoSnackbar
 import com.naze.do_swipe.ui.theme.TextSecondary
 import com.naze.do_swipe.ui.trash.TrashItem
@@ -67,9 +68,12 @@ fun ArchiveScreen(
             onConfirm = {
                 pendingDeleteId = null
                 viewModel.schedulePermanentDelete(idToDelete)
-                scope.showUndoSnackbar(snackbarHostState, "삭제됨") {
-                    viewModel.cancelPendingDelete(idToDelete)
-                }
+                scope.showUndoSnackbar(
+                    snackbarHostState,
+                    "삭제됨",
+                    onUndo = { viewModel.cancelPendingDelete(idToDelete) },
+                    onUndoFired = { app.analytics.logEvent(AnalyticsEvents.UNDO_CLICKED) }
+                )
             },
             onDismiss = { pendingDeleteId = null }
         )
@@ -148,9 +152,12 @@ fun ArchiveScreen(
                                 todo = todo,
                                 onRestore = {
                                     viewModel.uncomplete(todo.id)
-                                    scope.showUndoSnackbar(snackbarHostState, "복원됨") {
-                                        viewModel.recomplete(todo.id)
-                                    }
+                                    scope.showUndoSnackbar(
+                                        snackbarHostState,
+                                        "복원됨",
+                                        onUndo = { viewModel.recomplete(todo.id) },
+                                        onUndoFired = { app.analytics.logEvent(AnalyticsEvents.UNDO_CLICKED) }
+                                    )
                                 },
                                 onRequestPermanentDelete = { pendingDeleteId = todo.id },
                                 swipeReversed = swipeReversed,
@@ -195,9 +202,12 @@ fun ArchiveScreen(
                             todo = todo,
                             onRestore = {
                                 viewModel.restore(todo.id)
-                                scope.showUndoSnackbar(snackbarHostState, "복원됨") {
-                                    viewModel.markDeletedAgain(todo.id)
-                                }
+                                scope.showUndoSnackbar(
+                                    snackbarHostState,
+                                    "복원됨",
+                                    onUndo = { viewModel.markDeletedAgain(todo.id) },
+                                    onUndoFired = { app.analytics.logEvent(AnalyticsEvents.UNDO_CLICKED) }
+                                )
                             },
                             onRequestPermanentDelete = { pendingDeleteId = todo.id },
                             swipeReversed = swipeReversed,
