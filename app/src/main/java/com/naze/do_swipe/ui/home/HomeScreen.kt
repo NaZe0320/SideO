@@ -83,7 +83,7 @@ fun HomeScreen(
 ) {
     val app = LocalContext.current.applicationContext as TodoApplication
     val swipeReversedFromPrefs by app.settingsRepository.swipeReversed.collectAsState(initial = false)
-    val swipeBackgroundBlendFromPrefs by app.settingsRepository.swipeBackgroundBlendEnabled.collectAsState(initial = true)
+    val swipeBackgroundBlendFromPrefs by app.settingsRepository.swipeBackgroundBlendEnabled.collectAsState(initial = false)
     val swipeThresholdFromPrefs by app.settingsRepository.swipeThresholdFraction.collectAsState(initial = app.settingsRepository.getSwipeThresholdFraction())
     val activeTodos by viewModel.activeTodos.collectAsState()
     var newTitle by remember { mutableStateOf("") }
