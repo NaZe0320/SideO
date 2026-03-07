@@ -27,7 +27,7 @@ class SettingsRepository(context: Context) {
     private val _swipeReversed = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_REVERSED, false))
     val swipeReversed: StateFlow<Boolean> = _swipeReversed.asStateFlow()
 
-    private val _swipeBackgroundBlendEnabled = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_BACKGROUND_BLEND, true))
+    private val _swipeBackgroundBlendEnabled = MutableStateFlow(prefs.getBoolean(KEY_SWIPE_BACKGROUND_BLEND, false))
     val swipeBackgroundBlendEnabled: StateFlow<Boolean> = _swipeBackgroundBlendEnabled.asStateFlow()
 
     private val _swipeThresholdFraction = MutableStateFlow(prefs.getFloat(KEY_SWIPE_THRESHOLD, 0.5f))
