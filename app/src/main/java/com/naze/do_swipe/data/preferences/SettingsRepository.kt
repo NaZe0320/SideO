@@ -85,6 +85,12 @@ class SettingsRepository(context: Context) {
 
     fun getSwipeThresholdFraction(): Float = prefs.getFloat(KEY_SWIPE_THRESHOLD, 0.5f)
 
+    fun hasSeededTutorialTodos(): Boolean = prefs.getBoolean(KEY_TUTORIAL_SEEDED, false)
+
+    fun setTutorialSeeded() {
+        prefs.edit().putBoolean(KEY_TUTORIAL_SEEDED, true).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "do_swipe_settings"
         private const val KEY_THEME = "theme_mode"
@@ -94,5 +100,6 @@ class SettingsRepository(context: Context) {
         private const val KEY_REMINDERS = "reminders_enabled"
         private const val KEY_REMINDER_HOUR = "reminder_hour"
         private const val KEY_REMINDER_MINUTE = "reminder_minute"
+        private const val KEY_TUTORIAL_SEEDED = "tutorial_todos_seeded"
     }
 }
