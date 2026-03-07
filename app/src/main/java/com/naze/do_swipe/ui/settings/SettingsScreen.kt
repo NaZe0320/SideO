@@ -669,7 +669,7 @@ private fun ReminderTimePickerDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy((-12).dp),
+                    verticalArrangement = Arrangement.spacedBy((-16).dp),
                     modifier = Modifier.clip(RoundedCornerShape(4.dp))
                 ) {
                     FilterChip(

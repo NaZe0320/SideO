@@ -31,6 +31,25 @@ class TodoRepository(
         dao.insert(entity)
     }
 
+    suspend fun seedTutorialTodos() {
+        val now = System.currentTimeMillis()
+        val tutorialTitles = listOf(
+            "길게 눌러 순서를 바꿔보세요",
+            "왼쪽으로 스와이프해서 완료해보세요",
+            "오른쪽으로 스와이프해서 삭제해보세요"
+        )
+
+        tutorialTitles.forEachIndexed { index, title ->
+            dao.insert(
+                TodoEntity(
+                    title = title,
+                    createdAt = now,
+                    orderIndex = index
+                )
+            )
+        }
+    }
+
     suspend fun updateTodo(entity: TodoEntity) {
         val normalized = entity.title.trim().take(MAX_TITLE_LENGTH)
         if (normalized.isBlank()) return
