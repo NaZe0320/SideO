@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.naze.do_swipe.TodoApplication
+import com.naze.do_swipe.analytics.AnalyticsEvents
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.ui.components.showUndoSnackbar
 import com.naze.do_swipe.ui.theme.Primary
@@ -195,7 +196,7 @@ fun HomeScreen(
                 },
                 onSubmit = {
                     if (newTitle.isNotBlank()) {
-                        viewModel.addTodo(newTitle.trim(), newImportant)
+                        viewModel.addTodo(newTitle.trim(), newImportant, fromWidget = openAddOnStart)
                         newTitle = ""
                         newImportant = false
                     }
@@ -335,14 +336,22 @@ fun HomeScreen(
                                         swipeBackgroundBlendEnabled = swipeBackgroundBlendFromPrefs,
                                         thresholdFraction = swipeThresholdFromPrefs,
                                         onAfterComplete = { id ->
-                                            scope.showUndoSnackbar(snackbarHostState, "완료됨") {
-                                                viewModel.setCompleted(id, false)
-                                            }
+                                            app.analytics.logEvent(AnalyticsEvents.TASK_SWIPE_COMPLETED)
+                                            scope.showUndoSnackbar(
+                                                snackbarHostState,
+                                                "완료됨",
+                                                onUndo = { viewModel.setCompleted(id, false) },
+                                                onUndoFired = { app.analytics.logEvent(AnalyticsEvents.UNDO_CLICKED) }
+                                            )
                                         },
                                         onAfterDelete = { id ->
-                                            scope.showUndoSnackbar(snackbarHostState, "휴지통으로 이동") {
-                                                viewModel.restore(id)
-                                            }
+                                            app.analytics.logEvent(AnalyticsEvents.TASK_SWIPE_DELETED)
+                                            scope.showUndoSnackbar(
+                                                snackbarHostState,
+                                                "휴지통으로 이동",
+                                                onUndo = { viewModel.restore(id) },
+                                                onUndoFired = { app.analytics.logEvent(AnalyticsEvents.UNDO_CLICKED) }
+                                            )
                                         },
                                         enableInteractions = draggedItemId == null
                                     )

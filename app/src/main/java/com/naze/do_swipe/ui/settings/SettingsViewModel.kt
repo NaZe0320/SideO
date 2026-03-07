@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.naze.do_swipe.TodoApplication
+import com.naze.do_swipe.analytics.AnalyticsEvents
 import com.naze.do_swipe.data.preferences.SettingsRepository
 import com.naze.do_swipe.data.preferences.ThemeMode
 import com.naze.do_swipe.data.repository.TodoRepository
@@ -60,6 +61,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setRemindersEnabled(enabled: Boolean) {
         settings.setRemindersEnabled(enabled)
         if (enabled) {
+            (getApplication() as TodoApplication).analytics.logEvent(AnalyticsEvents.REMINDER_ENABLED)
             scheduleReminderWork()
         } else {
             WorkManager.getInstance(getApplication()).cancelUniqueWork(WORK_NAME)

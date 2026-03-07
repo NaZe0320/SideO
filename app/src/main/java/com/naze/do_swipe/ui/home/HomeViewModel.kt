@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.naze.do_swipe.TodoApplication
+import com.naze.do_swipe.analytics.AnalyticsEvents
 import com.naze.do_swipe.data.local.TodoEntity
 import com.naze.do_swipe.data.repository.TodoRepository
 import com.naze.do_swipe.widget.TodoAppWidgetProvider
@@ -24,10 +26,15 @@ class HomeViewModel(
             initialValue = emptyList()
         )
 
-    fun addTodo(title: String, isImportant: Boolean = false) {
+    fun addTodo(title: String, isImportant: Boolean = false, fromWidget: Boolean = false) {
         if (title.isBlank()) return
+        val analytics = (application as TodoApplication).analytics
         viewModelScope.launch {
             repository.addTodo(title.trim(), isImportant)
+            analytics.logEvent(AnalyticsEvents.TASK_CREATED)
+            if (fromWidget) {
+                analytics.logEvent(AnalyticsEvents.WIDGET_TASK_CREATED)
+            }
             TodoAppWidgetProvider.updateAllWidgets(application)
         }
     }
