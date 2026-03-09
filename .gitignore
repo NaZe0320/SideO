@@ -10,6 +10,8 @@
 .DS_Store
 /build
 /app/build/outputs/mapping
+/app/release
+*.aab
 /captures
 .externalNativeBuild
 .cxx
