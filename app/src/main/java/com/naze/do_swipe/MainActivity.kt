@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.naze.do_swipe.analytics.AnalyticsEvents
 import com.naze.do_swipe.navigation.NavGraph
 import com.naze.do_swipe.ui.theme.DoSwipeTheme
 import com.naze.do_swipe.widget.TodoAppWidgetProvider
@@ -17,6 +18,10 @@ class MainActivity : ComponentActivity() {
             TodoAppWidgetProvider.EXTRA_OPEN_ADD_FROM_WIDGET,
             false
         ) ?: false
+        if (intent?.getBooleanExtra("from_notification", false) == true) {
+            app.analytics.logEvent(AnalyticsEvents.NOTIFICATION_OPENED)
+            intent?.removeExtra("from_notification")
+        }
         setContent {
             val themeMode by app.settingsRepository.themeMode.collectAsState(
                 initial = com.naze.do_swipe.data.preferences.ThemeMode.SYSTEM

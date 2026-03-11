@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -13,8 +14,8 @@ android {
         applicationId = "com.naze.do_swipe"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.1.4"
+        versionCode = 8
+        versionName = "0.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -24,7 +25,8 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -47,6 +49,8 @@ android {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))

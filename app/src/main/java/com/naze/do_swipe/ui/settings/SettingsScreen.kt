@@ -91,8 +91,9 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val swipeReversed by viewModel.swipeReversed.collectAsState()
-    val swipeBackgroundBlendEnabled by viewModel.swipeBackgroundBlendEnabled.collectAsState()
-    val swipeThresholdFraction by viewModel.swipeThresholdFraction.collectAsState()
+    // 나중에 활성화: 스와이프 블렌딩·임계점 UI
+    // val swipeBackgroundBlendEnabled by viewModel.swipeBackgroundBlendEnabled.collectAsState()
+    // val swipeThresholdFraction by viewModel.swipeThresholdFraction.collectAsState()
     val remindersEnabled by viewModel.remindersEnabled.collectAsState()
     val reminderHour by viewModel.reminderHour.collectAsState()
     val reminderMinute by viewModel.reminderMinute.collectAsState()
@@ -191,26 +192,27 @@ fun SettingsScreen(
                     checked = swipeReversed,
                     onCheckedChange = { viewModel.setSwipeReversed(it) }
                 )
-                HorizontalDivider()
-                SettingsSwitchItem(
-                    icon = Icons.Outlined.SwapHoriz,
-                    iconTint = Primary,
-                    title = "스와이프 시 배경색 블렌딩",
-                    subtitle = "임계점에 가까울수록 카드 색이 삭제/완료 색으로 변해요",
-                    checked = swipeBackgroundBlendEnabled,
-                    onCheckedChange = { viewModel.setSwipeBackgroundBlendEnabled(it) }
-                )
-                HorizontalDivider()
-                SettingsSliderItem(
-                    icon = Icons.Outlined.Tune,
-                    iconTint = Primary,
-                    title = "스와이프 확정 거리",
-                    subtitle = "낮음: 살짝만 밀어도 완료/삭제 · 높음: 더 밀어야 확정 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
-                    value = swipeThresholdFraction,
-                    valueRange = 0.1f..0.9f,
-                    steps = 7,
-                    onValueChange = { viewModel.setSwipeThresholdFraction((it * 10).roundToInt() / 10f) }
-                )
+                // 나중에 활성화: 스와이프 블렌딩·임계점 설정
+                // HorizontalDivider()
+                // SettingsSwitchItem(
+                //     icon = Icons.Outlined.SwapHoriz,
+                //     iconTint = Primary,
+                //     title = "스와이프 시 배경색 블렌딩",
+                //     subtitle = "임계점에 가까울수록 카드 색이 삭제/완료 색으로 변해요",
+                //     checked = swipeBackgroundBlendEnabled,
+                //     onCheckedChange = { viewModel.setSwipeBackgroundBlendEnabled(it) }
+                // )
+                // HorizontalDivider()
+                // SettingsSliderItem(
+                //     icon = Icons.Outlined.Tune,
+                //     iconTint = Primary,
+                //     title = "스와이프 확정 거리",
+                //     subtitle = "낮음: 살짝만 밀어도 완료/삭제 · 높음: 더 밀어야 확정 (현재 ${(swipeThresholdFraction * 100).toInt()}%)",
+                //     value = swipeThresholdFraction,
+                //     valueRange = 0.1f..0.9f,
+                //     steps = 7,
+                //     onValueChange = { viewModel.setSwipeThresholdFraction((it * 10).roundToInt() / 10f) }
+                // )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -667,14 +669,14 @@ private fun ReminderTimePickerDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy((-12).dp),
-                    modifier = Modifier.clip(RoundedCornerShape(20.dp))
+                    verticalArrangement = Arrangement.spacedBy((-16).dp),
+                    modifier = Modifier.clip(RoundedCornerShape(4.dp))
                 ) {
                     FilterChip(
                         selected = !isAfternoon,
                         onClick = { isAfternoon = false },
                         label = { Text("오전") },
-                        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 0.dp, bottomStart = 0.dp),
+                        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomEnd = 0.dp, bottomStart = 0.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = primaryColor,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -684,7 +686,7 @@ private fun ReminderTimePickerDialog(
                         selected = isAfternoon,
                         onClick = { isAfternoon = true },
                         label = { Text("오후") },
-                        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 20.dp, bottomStart = 20.dp),
+                        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomEnd = 4.dp, bottomStart = 4.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = primaryColor,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary

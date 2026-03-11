@@ -9,6 +9,9 @@
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/app/build/outputs/mapping
+/app/release
+*.aab
 /captures
 .externalNativeBuild
 .cxx
@@ -20,3 +23,5 @@ local.properties
 .idea/runConfigurations.xml
 .idea/vcs.xml
 .idea/inspectionProfiles/Project_Default.xml
+app/google-services.json
+docs/playstore-screenshots
